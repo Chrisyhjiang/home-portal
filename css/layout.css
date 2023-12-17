@@ -34,7 +34,6 @@ section {
     position:relative;
     height: 100vh;
     border: 1px solid #ccc;
-    display: flex;
     margin-bottom: 20px;
     justify-content: center;
     align-items: center;
@@ -44,17 +43,9 @@ section {
 
   .container2 {
     position: relative;
-    display: flex;
     width: 100%;
     height: 100vh;
 }
-
-  #about {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    height: 100vh;
-  }
 
   .circular-image {
     width: 100px; /* Adjust the width and height as needed */
@@ -62,15 +53,16 @@ section {
     border-radius: 50%; /* This makes the element circular */
     overflow: hidden; /* Hide any content that might exceed the circle */
     float: left;
+    margin-left: 250px;
     margin-right: 20px;
   }
 
   .text-section {
     position:absolute;
     overflow: hidden;
-    padding: 0 0px; /* Add padding as needed */
+    padding: 0 20px; /* Add padding as needed */
+    margin-right: 250px;
     font-size:larger;
-
   }
 
 ul {
