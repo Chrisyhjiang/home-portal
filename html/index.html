@@ -6,6 +6,8 @@
     <link rel="stylesheet" href="../css/layout.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <link rel="stylesheet" href="https://www.w3schools.com/w3css/4/w3.css">
+    <link rel="stylesheet" href="../css/timeline.css">
+    <script src="../script/timeline.js"></script>
 </head>
 <body>
     <div class="container">
@@ -15,7 +17,7 @@
                     <nav>
                         <a href = "">HOME</a>
                         <a href = "#about">ABOUT</a>
-                        <a href = "">RESUME</a>
+                        <a href = "#resume">RESUME</a>
                         <a href = "">PROJECT</a>
                         <a href = "">CONTACT</a>
                     </nav> 
@@ -48,7 +50,7 @@
         </div>
      
     </div>
-    <section id="about" class="section">
+    <section id="about">
         <div class="container2">
             <h5 style="top:10%; font-size:24px; text-align:center;">About</h5>
             <h1 style="top:20%; font-size:36px; text-align:center;">Let me introduce myself</h1>
@@ -142,6 +144,48 @@
                 </div>
             </div>
         </div>     
+    </section>
+
+    <section id="resume">
+        <div id="content">
+            <h1>Working Experience</h1>
+          
+            <ul class="timeline">
+              <li class="event" data-date="09/2023 -  12/2023">
+                <h3>Intern | Bulk Barn ｜Aurora, Ontario, Canada</h3>
+                <p>Provide technical support for computers, routers, and printers for Bulk Barn stores across Canada</p>
+                <p>Used various services such as Bash script, Active Directory, PDQ deploy to manage software deployment</p>
+              </li>
+              <li class="event" data-date="06/2022 - 08/2022">
+                <h3> Intern | Argon Medical Device Inc. | Dallas, TX, USA</h3>
+                <p>Wrote Bash & SQL scripts to consolidate inventory data and conducted manual testing on in-house
+                    development tools</p>
+                <p>Installed security patches and tested corporate Wi-Fi latency and bandwidth</p>    
+              </li>
+            </ul>
+          </div>
+
+          <div id="content">
+            <h1>Education</h1>
+            <ul class="timeline">
+              <li class="event" data-date="09/2022 - 05/2027">
+                <h3>University of Waterloo | Waterloo, ON, Canada</h3>
+                <h5>Bachelor of Computer Science (BCS) Honors Co-op program</h5>
+                <p>Learned Object-Oriented Software Development in C++, Java and Functional programming in C</p>
+                <p>Learned Algorithm Analysis, Data Structures, Linux Bash, Git, and Test-Driven Development</p>    
+              </li>
+              <li class="event" data-date="09/2023 - 03/2024">
+                <h3>The University of Texas at Austin | TX, USA</h3>
+                <h5>Professional Certificate in Full Stack Software Development: Building Scalable Cloud Applications</h5>
+                <p>Learned front-end web development in Javascript, jQuery, ReactJs, HTML, CSS and back-end development in Node.js, ExpressJs, unit testing</p>
+                <p>Learned database development with SQL and NoSQL(MongoDB), and introduction to MERN stack and Cloud Computing Foundation AWS</p> 
+              </li>
+              <li class="event" data-date="09/2016 - 06/2022">
+                <h3>TMS School | Richmond Hill, Ontario, Canada</h3>
+                <h5>IB Diploma Program | IB scores: 43/45 </h5>
+              </li>
+            </ul>
+          </div>
     </section>
 </body>
 </html>
