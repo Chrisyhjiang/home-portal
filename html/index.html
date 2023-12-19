@@ -7,6 +7,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <link rel="stylesheet" href="https://www.w3schools.com/w3css/4/w3.css">
     <link rel="stylesheet" href="../css/timeline.css">
+    <link rel="stylesheet" href="../css/fontello.css">
     <script src="../script/timeline.js"></script>
 </head>
 <body>
@@ -17,9 +18,10 @@
                     <nav>
                         <a href = "">HOME</a>
                         <a href = "#about">ABOUT</a>
-                        <a href = "#resume">RESUME</a>
-                        <a href = "">PROJECT</a>
-                        <a href = "">CONTACT</a>
+                        <a href = "#resume">WORK</a>
+                        <a href="#education">EDUCATION</a>
+                        <a href = "#project">PROJECT</a>
+                        <a href = "#contact">CONTACT</a>
                     </nav> 
                 </header>
             </ul>
@@ -43,13 +45,14 @@
                     </a>
                 </li>
                 <li style="position: absolute; top:40%; left:59%">
-                    <a href="" ><i class="fab fa-discord fa-2x"></i>
+                    <a href="" ><i class="fab fa-discord fa-2xl"></i>
                     </a>
                 </li>
             </ul>
         </div>
-     
+        <a href="#about" style="position: absolute;top:80%; left:50%"><i class="fa-regular fa-circle-down fa-2xl" style="color:white"></i></a>
     </div>
+   
     <section id="about">
         <div class="container2">
             <h5 style="top:10%; font-size:24px; text-align:center;">About</h5>
@@ -163,8 +166,9 @@
                 <p>Installed security patches and tested corporate Wi-Fi latency and bandwidth</p>    
               </li>
             </ul>
-          </div>
-
+        </div>
+    </section>
+    <section id="education">
           <div id="content">
             <h1>Education</h1>
             <ul class="timeline">
@@ -175,18 +179,27 @@
                 <p>Learned Algorithm Analysis, Data Structures, Linux Bash, Git, and Test-Driven Development</p>    
               </li>
               <li class="event" data-date="09/2023 - 03/2024">
-                <h3>The University of Texas at Austin | TX, USA</h3>
+                <h3>The University of Texas at Austin | Austin, TX, USA</h3>
                 <h5>Professional Certificate in Full Stack Software Development: Building Scalable Cloud Applications</h5>
                 <p>Learned front-end web development in Javascript, jQuery, ReactJs, HTML, CSS and back-end development in Node.js, ExpressJs, unit testing</p>
                 <p>Learned database development with SQL and NoSQL(MongoDB), and introduction to MERN stack and Cloud Computing Foundation AWS</p> 
               </li>
               <li class="event" data-date="09/2016 - 06/2022">
-                <h3>TMS School | Richmond Hill, Ontario, Canada</h3>
+                <h3>TMS School | Richmond Hill, ON, Canada</h3>
                 <h5>IB Diploma Program | IB scores: 43/45 </h5>
               </li>
             </ul>
           </div>
     </section>
-</body>
+    <section id="project" style=" height:100vh; background-color: white;">
+        <div class="container2">
+            <div id="content" style="font-size:36px; color:red">Projects</div>
+        </div>
+    </section>
+    <section id="contact" style=" height:100vh; background-color:black;">
+        <div class="container2">
+            <div id="content" style="font-size:24px;color:red">Contact</div>
+        </div>
+    </section>
 </html>
 
