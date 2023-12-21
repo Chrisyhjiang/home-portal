@@ -42,9 +42,53 @@ header {
     background-color: var(--primary-color);
 }
 
+button {
+    position: absolute;
+    background-color: purple;
+    color: #fff;
+    border: 1px purple solid;
+    font-size: 14px;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    padding: 20px 30px;
+    overflow: hidden;
+    margin: 10px 0;
+    z-index: 2;
+  }
+  
+  button:focus {
+    outline: none;
+  }
+  
+  .arrow {
+    position: fixed;
+    background-color: transparent;
+    color: #fff;
+    padding: 20px;
+    font-size: 30px;
+    border: 2px solid orange;
+    top: 50%;
+    transform: translateY(-50%);
+    cursor: pointer;
+  }
+  
+  .arrow:focus {
+    outline: 0;
+  }
+  
+  .left-arrow {
+    left: calc(2vw);
+  }
+  
+  .right-arrow {
+    right: calc(2vw);
+  }
+
+
 main {
     display: flex;
     flex-wrap: wrap;
+    margin-left: calc(6vw);
 }
 
 .movie {

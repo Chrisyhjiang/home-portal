@@ -12,21 +12,23 @@
       crossorigin="anonymous" />
     </head>
     <body>
+
         <header>
             <form id="form">
-                <Button id="left">
-                    <i class="fas fa-arrow-left"></i>
-                </Button>
-                <Button id="right">
-                    <i class="fas fa-arrow-right"></i>
-                </Button>
+                
                 <input type="text" id="search" class="search" placeholder="Search">
             </form>
-            
-           
         </header>
-        <main id="main">
-        </main>
+        <div style="display:flex;background-color: var(--primary-color) ;">
+            <Button id="left" class="arrow left-arrow">
+                <i class="fas fa-arrow-left"></i>
+            </Button>
+             <main id="main"></main>
+            <Button id="right" class="arrow right-arrow">
+                <i class="fas fa-arrow-right"></i>
+            </Button>
+            
+        </div>
         <script src="script.js"></script>
     </body>
 </html>
