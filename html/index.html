@@ -8,7 +8,7 @@
     <link rel="stylesheet" href="https://www.w3schools.com/w3css/4/w3.css">
     <link rel="stylesheet" href="../css/timeline.css">
     <link rel="stylesheet" href="../css/fontello.css">
-    <script src="../script/timeline.js"></script>
+    <script src="../script/script.js"></script>
 </head>
 <body>
     <div class="container">
@@ -194,6 +194,25 @@
     <section id="project" style=" height:100vh; background-color: white;">
         <div class="container2">
             <div id="content" style="font-size:36px; color:red">Projects</div>
+                <div id="project-list">
+                    <div id="project1">
+                        <h3><a href="http://chrisjiang.net/slidingCards/index.html">Sliding Cards</a></h3>
+                        <img id="project1" src="../images/slidingCards.png" onclick="openModal(0)">
+                    </div>
+
+                    <div id="project2">
+                        <h3><a href="http://chrisjiang.net/movieApp/index.html">Movies Finder</a></h3>
+                        <img id="project2" src="../images/movieApp.png" onclick="openModal(1)">
+                    </div>
+                </div>
+        </div>
+        <div id="modal" style="display: none;">
+            <div id="modalContent">
+                <span id="close-button" onclick="closeModal()"><i class="fa-solid fa-xmark"></i></span>
+                <h1 id="project-title"></h1>
+                <p id="project-details"></p>
+                <div id="project-git"><a id="project-git-url"></a></div>   
+            </div>
         </div>
     </section>
     <section id="contact" style=" height:100vh; background-color:black;">
