@@ -43,6 +43,7 @@ hr.divider {
 
   .container2 {
     position: relative;
+    top:10%;
     width: 100%;
     height: 100vh;
   }
@@ -118,7 +119,6 @@ ul {
 
 
 a {
-
     /* 8px padding top + 8px padding bottom + 32px line-height = 48px */
     display: inline-block;
     padding: 8px 13px;
@@ -127,9 +127,8 @@ a {
     text-align: left;
 }
 #project-list {
-  
   display: flex;
-  height: 80vh;
+  height: 70vh;
   flex-wrap: wrap;
   justify-content: center;
   align-items: center;
@@ -248,4 +247,43 @@ a {
 
 #project-git-url:hover {
   background-color: #0056b3;
+}
+
+#contact-me {
+    position:relative;
+    display: flex;
+    flex: column;
+    justify-content: center;
+    height: 100vh;
+    border: none;
+    margin-bottom: 20px;
+    justify-content: center;
+    align-items: center;
+    color: black;
+    background-image: url('../images/world-map.avif');
+    background-repeat: no-repeat;
+    background-size: cover;
+}
+
+#contact-me h2 {
+  text-align: center;
+  color: black;
+}
+
+#contact-me p {
+  text-align: center;
+  color: black;
+  font-size: 24px;
+}
+
+#contact-me a {
+  display: inline-block;
+  margin-top: 20px;
+  text-decoration: none;
+  color: #333;
+}
+
+#contact-me i {
+  margin-right: 5px;
+  font-size: 2em;
 }
