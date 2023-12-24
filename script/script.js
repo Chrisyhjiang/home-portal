@@ -26,8 +26,6 @@ var navLinks = document.querySelectorAll('nav a');
 for (var i = 0; i < navLinks.length; i++) {
     // Add an event listener to each link
     navLinks[i].addEventListener('click', function(event) {
-        // Prevent the default action
-        //event.preventDefault();
 
         // Remove the 'active' class from all links
         for (var i = 0; i < navLinks.length; i++) {
