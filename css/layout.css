@@ -3,6 +3,10 @@ body {
     padding: 0;
 }
 
+nav a.active {
+  color: red;
+}
+
 .container {
     position: relative;
     display: flex;
@@ -26,6 +30,7 @@ body {
     z-index: 2; /* Set the z-index higher than the background (default is 0) */
     text-align: center; /* Optional: Center the text within the content div */
     color: white; /* Optional: Set text color */
+    font-size: 24px;
 }
 
 hr.divider {

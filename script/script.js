@@ -19,6 +19,26 @@ var projects = [
     // Add more projects as needed...
 ];
 
+// Get all the <a> tags inside <nav>
+var navLinks = document.querySelectorAll('nav a');
+
+// Loop through all the links
+for (var i = 0; i < navLinks.length; i++) {
+    // Add an event listener to each link
+    navLinks[i].addEventListener('click', function(event) {
+        // Prevent the default action
+        //event.preventDefault();
+
+        // Remove the 'active' class from all links
+        for (var i = 0; i < navLinks.length; i++) {
+            navLinks[i].classList.remove('active');
+        }
+
+        // Add the 'active' class to the clicked link
+        this.classList.add('active');
+    });
+}
+
 
 function openModal(projectId) {
     var modal = document.getElementById('modal');
