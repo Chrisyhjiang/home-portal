@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>MovieApp</title>
+        <link rel="stylesheet" href="style.css" />
+        <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.14.0/css/all.min.css"
+      integrity="sha512-1PKOgIY59xJ8Co8+NE6FZ+LOAZKjy+KY8iq0G4B3CyeY6wYHN3yt9PW0XpSriVlkMXe40PTKnXrLnZ9+fkDaog=="
+      crossorigin="anonymous" />
+    </head>
+    <body>
+
+        <header>
+            <form id="form">
+                
+                <input type="text" id="search" class="search" placeholder="Search">
+            </form>
+        </header>
+        <div style="display:flex;background-color: var(--primary-color) ;">
+            <Button id="left" class="arrow left-arrow">
+                <i class="fas fa-arrow-left"></i>
+            </Button>
+             <main id="main"></main>
+            <Button id="right" class="arrow right-arrow">
+                <i class="fas fa-arrow-right"></i>
+            </Button>
+            
+        </div>
+        <script src="script.js"></script>
+    </body>
+</html>
