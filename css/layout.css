@@ -11,6 +11,13 @@ body {
     background: url('../images/bg.avif') center/cover no-repeat; /* Set the background image */
 }
 
+.container2 {
+  position: relative;
+  top:5%;
+  width: 100%;
+  height: 100vh;
+}
+
 .content {
     position: absolute; /* Position the content relative to the container */
     top: 10%; /* Adjust the top position as needed */
@@ -29,6 +36,19 @@ hr.divider {
     border: none;
     border-top: 1px solid white; /* Adjust the color and style as needed */
 }
+.socialMedia {
+  display: flex;
+  justify-content: space-around; /* Distribute items evenly */
+  align-items: center; /* Align items vertically center */  
+  position: absolute;
+  top: 40%;
+  left:30%;
+  width: 40%;
+}
+
+.socialMedia li {
+  margin: 0 10px; /* Add some space between the links */
+}
 
 #about {
     position:relative;
@@ -41,12 +61,9 @@ hr.divider {
     color: white;
 }
 
-  .container2 {
-    position: relative;
-    top:5%;
-    width: 100%;
-    height: 100vh;
-  }
+
+
+
 
   .circular-image {
     width: 100px; /* Adjust the width and height as needed */
@@ -63,7 +80,6 @@ hr.divider {
     overflow: hidden;
     font-size:larger;
   }
-
 
 
   #progress_bar {
@@ -88,7 +104,7 @@ hr.divider {
   }
 
   .logo{
-    width:50%;
+    width:30%;
     height:auto; 
     padding-right: 10px;
   }
@@ -144,7 +160,7 @@ hr.divider {
 
   .w3-amber {
     width: 56%;
-    background-color: amber;
+    background-color: #FFBF00;
     height: 5px;
   }
 
@@ -170,7 +186,7 @@ hr.divider {
 
 #resume {
     position:relative;
-    height: 100vh;
+    height: 50vh;
     border: none;
     margin-bottom: 20px;
     justify-content: center;
@@ -196,7 +212,7 @@ ul {
 
 
 
-a {
+a{
     /* 8px padding top + 8px padding bottom + 32px line-height = 48px */
     display: inline-block;
     padding: 8px 13px;
@@ -204,6 +220,7 @@ a {
     text-decoration: none;
     text-align: left;
 }
+
 #project-list {
   display: flex;
   height: 70vh;
