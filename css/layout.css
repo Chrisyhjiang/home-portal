@@ -387,3 +387,14 @@ a{
   margin-right: 5px;
   font-size: 2em;
 }
+
+.contact-info {
+  text-align: left;
+}
+
+.center-container {
+  display: flex;
+  justify-content: center;
+}
+
+
