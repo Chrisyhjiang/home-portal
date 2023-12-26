@@ -30,8 +30,8 @@ nav a.active {
     z-index: 2; /* Set the z-index higher than the background (default is 0) */
     text-align: center; /* Optional: Center the text within the content div */
     color: white; /* Optional: Set text color */
-    font-size: 24px;
-    margin-top: 20px;
+    font-size: 1.0vw;
+    margin-top: 100px;
     margin-bottom: 20px;
 }
 
