@@ -10,11 +10,17 @@ var projects = [
     },
     {
         title: "Movie Finder",
-        details:  "This project using HTML, CSS and JavaScript to create a movie application that leverages a third-party API (https://www.themoviedb.org/) " +
+        details:  "This project uses HTML, CSS and JavaScript to create a movie application that leverages a third-party API (https://www.themoviedb.org/) " +
                   "to retrieve movie data, including titles, ratings, and images." +
                   "It employs the Fetch API and Promises for making HTTP requests to the third-party API. Additional features of the application include a search function, pagination, " +
                   "and CSS animations to display an overview of the movies.",
         gitRepo: "https://github.com/Chrisyhjiang/JsProject/tree/main/movieApp"
+    },
+    {
+        title: "Digital Clock",
+        details:  "This project uses HTML, CSS and JavaScript to create a digital clock that can be toggled between dark and light mode." +
+                  "It uses CSS to style the hand clocks as well as javascript to simulate the a clock real time by updating the rotate transformation based on the time of day",
+        gitRepo: "https://github.com/Chrisyhjiang/JsProject/tree/main/clock"
     },
     // Add more projects as needed...
 ];

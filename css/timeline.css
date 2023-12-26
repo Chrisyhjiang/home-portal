@@ -130,3 +130,18 @@ h1 {
   content: "";
   top: 5px;
 }
+@media (max-width: 768px) {
+  .timeline {
+    max-width: 100%; /* Adjust the max-width for smaller screens */
+    padding: 20px; /* Adjust padding for smaller screens */
+  }
+
+  .timeline .event:before {
+    left: 0;
+    text-align: center;
+  }
+
+  .timeline .event:after {
+    left: -28.85px; /* Adjust the position of the circle for smaller screens */
+  }
+}
