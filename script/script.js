@@ -60,7 +60,5 @@ function openModal(projectId) {
 function closeModal() {
     var modal = document.getElementById('modal');
     modal.classList.remove('open');
-    modal.addEventListener('transitionend', function() {
-        modal.style.display = 'none';
-    }, { once: true }); // Remove the modal after the transition has ended
+    modal.style.display = 'none';
 }

@@ -198,11 +198,37 @@
           </section>
           
           <section id="project">
-            <h1>Project</h1>
+            <h1 style="text-align:center;">Project</h1>
+            <div id="project-list">
+                <div id="project1">
+                    <h3><a href="http://chrisjiang.net/jsprojects/slidingCards/index.html" style="color:black;" title="Click to view the Sliding Card project">Sliding Cards</a></h3>
+                    <img id="project1" src="./images/slidingCards.png" onclick="openModal(0)">
+                </div>
+
+                <div id="project2">
+                    <h3><a href="http://chrisjiang.net/jsprojects/movieApp/index.html" style="color:black;" title="Click to view the Movies Finder project">Movies Finder</a></h3>
+                    <img id="project2" src="./images/movieApp.png" onclick="openModal(1)">
+                </div>
+
+                <div id="project3">
+                    <h3><a href="http://chrisjiang.net/jsprojects/clock/index.html" style="color:black;" title="Click to view the a custom built digital clock">Digital Clock</a></h3>
+                    <img id="project3" src="./images/clock.png" onclick="openModal(2)" style="height:225px; width: auto">
+                </div>
+            </div>
+            <div id="modal" style="display:none;">
+                <div id="modalContent">
+                    <span id="close-button" onclick="closeModal()"><i class="fa-solid fa-xmark"></i></span>
+                    <h1 id="project-title"></h1>
+                    <p id="project-details"></p>
+                    <div id="project-git"><a id="project-git-url"></a></div>   
+                </div>
+            </div>
+  
           </section>
 
           <section id="contact">
             <h1>Contact</h1>
           </section>
-    </bod>
+          <script src="./script/script.js"></script>
+    </body>
     </html>
