@@ -25,8 +25,10 @@ var projects = [
     // Add more projects as needed...
 ];
 
-// Get all the <a> tags inside <nav>
-var navLinks = document.querySelectorAll('nav a');
+// Get the div with class name 'row'
+var div = document.querySelector('.row');
+// Get all link elements under the div
+var navLinks = div.querySelectorAll('a');
 
 // Loop through all the links
 for (var i = 0; i < navLinks.length; i++) {
