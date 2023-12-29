@@ -59,7 +59,7 @@
             <div id="introduction">
                 <span><img src="./images/chris.jpg" class="circular-image"></span>
                 <span>Hello! I am a sophomore at the University of Waterloo, pursuing a major in Computer Science. My interest in computer science began in high school, where I took my first programming course. I was fascinated by the ability to create something from nothing, and the endless possibilities that came with it.
-                With a passion for technology and a strong academic foundation, I am eager to apply my knowledge and skills in a real-world setting through an internship position.
+                With a passion for technology and a strong academic foundation, I am eager to apply my knowledge and skills in a real-world setting.
                 </span>
                 <h5 style="padding:10px; ";>Skills:</h5>
             </div> 
@@ -159,7 +159,7 @@
                         <li class="event" data-date="09/2023 - 12/2023">
                           <h4 class="mb-3">Bulk Barn</h4>
                           <h4 class="mb-3">Aurora, Ontario, Canada</h4>
-                          <p>I worinterned in the IT department, providing technical support for IT infrastructure across multiple Bulk Barn locations in Canada, including computers, routers, and printers. I utilized tools and services such as Bash scripting for task automation, Active Directory for network management, and PDQ Deploy for streamlined software deployment.</p>
+                          <p>I interned in the IT department, providing technical support for IT infrastructure across multiple Bulk Barn locations in Canada, including computers, routers, and printers. I utilized tools and services such as Bash scripting for task automation, Active Directory for network management, and PDQ Deploy for streamlined software deployment.</p>
                         </li>
                         <li class="event" data-date="06/2022 - 08/2022">
                           <h4 class="mb-3">Argon Medical Device Inc.</h4>
@@ -209,26 +209,48 @@
             <h1 style="text-align:center;">Project</h1>
             <div id="project-list">
                 <div id="project1">
-                    <h3><a href="http://chrisjiang.net/jsprojects/slidingCards/index.html" style="color:black;" title="Click to view the Sliding Card project">Sliding Cards</a></h3>
-                    <img id="project1" src="./images/slidingCards.png" onclick="openModal(0)">
+                    <h3><a href="http://chrisjiang.net/jsprojects/slidingCards/index.html" class="project-git-url" style="font-size: 20px; padding: 15px;" title="Click to view the Sliding Card project">Sliding Cards</a></h3>
+                    <div class="image-container" >
+                        <img src="./images/slidingCards.png" onclick="openModal(0)">
+                        <div class="plusSign">
+                            <i class="fas fa-plus" style="font-size: 2vw;"></i>
+                        </div>
+                    </div>
                 </div>
-
                 <div id="project2">
-                    <h3><a href="http://chrisjiang.net/jsprojects/movieApp/index.html" style="color:black;" title="Click to view the Movies Finder project">Movies Finder</a></h3>
-                    <img id="project2" src="./images/movieApp.png" onclick="openModal(1)">
+                    <h3><a href="http://chrisjiang.net/jsprojects/movieApp/index.html" class="project-git-url" style="font-size: 20px; padding: 15px;" title="Click to view the Movies Finder project">Movies Finder</a></h3>
+                    <div class="image-container">
+                        <img id="project2" src="./images/movieApp.png" onclick="openModal(1)">
+                        <div class="plusSign">
+                            <i class="fas fa-plus" style="font-size: 2vw;"></i>
+                        </div>
+                    </div>
                 </div>
 
                 <div id="project3">
-                    <h3><a href="http://chrisjiang.net/jsprojects/clock/index.html" style="color:black;" title="Click to view the a custom built digital clock">Digital Clock</a></h3>
-                    <img id="project3" src="./images/clock.png" onclick="openModal(2)" style="height:225px; width: auto">
+                    <h3><a href="http://chrisjiang.net/jsprojects/clock/index.html" class="project-git-url" style="font-size: 20px; padding: 15px;" title="Click to view the a custom built digital clock">Digital Clock</a></h3>
+                    <div class="image-container">
+                        <img id="project3" src="./images/clock.png" onclick="openModal(2)" >
+                        <div class="plusSign">
+                            <i class="fas fa-plus" style="font-size: 2vw;"></i>
+                        </div>
+                    </div>
                 </div>
             </div>
+              
+              
+                
+              
+              
+              
+              
+              
             <div id="modal" style="display:none;">
                 <div id="modalContent">
                     <span id="close-button" onclick="closeModal()"><i class="fa-solid fa-xmark"></i></span>
                     <h1 id="project-title"></h1>
                     <p id="project-details"></p>
-                    <div id="project-git"><a id="project-git-url"></a></div>   
+                    <div id="project-git"><a id="project-git-url" class="project-git-url"></a></div>   
                 </div>
             </div>
   
