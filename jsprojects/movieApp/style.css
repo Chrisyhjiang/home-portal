@@ -59,30 +59,7 @@ button {
   button:focus {
     outline: none;
   }
-  
-  .arrow {
-    position: fixed;
-    background-color: transparent;
-    color: #fff;
-    padding: 20px;
-    font-size: 30px;
-    border: 2px solid orange;
-    top: 50%;
-    transform: translateY(-50%);
-    cursor: pointer;
-  }
-  
-  .arrow:focus {
-    outline: 0;
-  }
-  
-  .left-arrow {
-    left: calc(2vw);
-  }
-  
-  .right-arrow {
-    right: calc(2vw);
-  }
+ 
 
 
 main {
@@ -155,5 +132,7 @@ main {
     transform: translateY(0);
 }
 
-
+#spinner {
+    visibility: hidden;
+}
 

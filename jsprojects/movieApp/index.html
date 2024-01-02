@@ -19,15 +19,12 @@
                 <input type="text" id="search" class="search" placeholder="Search">
             </form>
         </header>
+        <div id="spinner">
+            <i class="fas fa-spinner fa-spin fa-3x" style="line-height: 1; color: rgb(255, 255, 255); position: fixed; left:50%; top: 80%; transform: translate(-50%, -50%); z-index: 2"></i>
+        </div>
         <div style="display:flex;background-color: var(--primary-color) ;">
-            <Button id="left" class="arrow left-arrow">
-                <i class="fas fa-arrow-left"></i>
-            </Button>
-             <main id="main"></main>
-            <Button id="right" class="arrow right-arrow">
-                <i class="fas fa-arrow-right"></i>
-            </Button>
-            
+             <main id="main">
+             </main>
         </div>
         <script src="script.js"></script>
     </body>

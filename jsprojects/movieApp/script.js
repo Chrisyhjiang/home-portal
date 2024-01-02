@@ -8,36 +8,26 @@ const main = document.getElementById('main');
 const leftArrow = document.getElementById('left');
 const rightArrow = document.getElementById('right');
 
+let isLoading = false; 
 let i = 1;
 
 getMovies(API_UI + "&page=" + i);
 
 async function getMovies(url){
-    // pagenation between 1 and 500
-    if( i == 1) {
-        leftArrow.style.display = 'none';
-    } else {
-        leftArrow.style.display = 'block'; 
-    }
-    if( i == 500) {
-        rightArrow.style.display = 'none';
-    } else {
-        rightArrow.style.display = 'block'; 
-    }
-
-    const res = await fetch(url);
+    const res =  await fetch(url);
     const data = await res.json();
+    let spinner = document.getElementById("spinner");
+    spinner.style.visibility = 'hidden';
     showMovies(data.results);
 }
 
 function showMovies(movies){
-    main.innerHTML = '';
     movies.forEach((movie) => {
         const { title, poster_path, vote_average, overview} = movie;
 
         const movieEl = document.createElement('div');
         movieEl.classList.add('movie');
-        movieEl.innerHTML = `<div class="movie">
+        let child = `<div class="movie">
                             <img src="${IMG_PATH + poster_path}" alt="${title}" />
         <div class="movie-info">
             <h3>${title}</h3>
@@ -48,8 +38,9 @@ function showMovies(movies){
             ${overview}
         </div>
 
-    </div>`
-    main.appendChild(movieEl);
+        </div>`
+        movieEl.innerHTML += child; 
+        main.appendChild(movieEl);
 
     })
 
@@ -70,31 +61,27 @@ form.addEventListener('submit', (e) => {
     e.preventDefault();
     const searchTerm = search.value;
     if(searchTerm && searchTerm !== ''){
+        main.innerHTML='';
         getMovies(SEARCH_API + searchTerm);
-        search.value='';
     }else {
         window.location.reload();
     }
 })
 
-leftArrow.addEventListener('click', (e) =>{
-    if( i > 1) {
-        i--;
-        let url = API_UI;
-        if(search.value && search.value !== '' ){
-            url = SEARCH_API;
+window.addEventListener('scroll', () => {
+    // Check if the user is near the bottom of the page
+    if (window.innerHeight + window.scrollY >= document.body.offsetHeight - 100 && !isLoading) {
+        if( i < 500) {
+            isLoading = true;
+            i++;
+            let url = API_UI;
+            if(search.value && search.value !== ''){
+                url = SEARCH_API + search.value;
+            }
+            let spinner = document.getElementById("spinner");
+            spinner.style.visibility = 'visible';
+            getMovies(url + "&page=" + i);
+            isLoading = false; 
         }
-        getMovies(url + "&page=" + i);
     }
-})
-
-rightArrow.addEventListener('click', (e) =>{
-    if( i < 500) {
-        i++;
-        let url = API_UI;
-        if(search.value && search.value !== '' ){
-            url = SEARCH_API;
-        }
-        getMovies(url + "&page=" + i);
-    }
-})
+});
