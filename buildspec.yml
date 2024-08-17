@@ -1,0 +1,25 @@
+
+
+phases:
+  install:
+    commands:
+      - echo "No installation necessary"
+  pre_build:
+    commands:
+      - echo "Pre-build steps not required"
+  build:
+    commands:
+      - echo "Copying files from source to destination"
+      - cp -R ./src/* ./dist/
+  post_build:
+    commands:
+      - echo "Build process completed"
+
+artifacts:
+  files:
+    - '**/*'
+  base-directory: 'dist' # Ensure this matches where your output files are stored
+
+cache:
+  paths:
+    - 'None' # No caching needed if no dependencies are installed
