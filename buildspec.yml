@@ -17,9 +17,9 @@ phases:
     commands:
       - echo "Build process completed"
       - echo "Delete all files from the root of the S3 bucket"
-      - aws s3 rm s3://chrisjiang.net/ --recursive
+      - aws s3 rm s3://chrisjiang.net/ --recursive --debug
       - echo "Copy new files to S3 bucket"
-      - aws s3 cp ./dist/ s3://chrisjiang.net/ --recursive
+      - aws s3 cp ./dist/ s3://chrisjiang.net/ --recursive --debug
       - echo "Build and deploy completed successfully"
 
 artifacts:
