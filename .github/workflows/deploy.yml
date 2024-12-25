@@ -19,4 +19,4 @@ jobs:
 
       - name: Deploy to S3
         run: |
-          aws s3 sync ./ s3://fc.chrisjiang.net --delete
+          aws s3 sync ./ s3://chrisjiang.net --delete
