@@ -1,0 +1,10 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+@import "./mac_background.css";
+
+/* Custom MacOS-like Styling */
+html, body {
+  font-family: "Inter", sans-serif;
+  background-color: #121212;
+}
