@@ -15,9 +15,9 @@ interface DockProps {
   openApp: (app: string) => void;
 }
 
-const SCALE = 1.75; // Reduced from 2.25
-const DISTANCE = 70; // Reduced from 90
-const NUDGE = 20; // Reduced from 30
+const SCALE = 1.75;
+const DISTANCE = 70;
+const NUDGE = 20;
 const SPRING = {
   mass: 0.1,
   stiffness: 170,
@@ -30,7 +30,7 @@ export default function Dock({ openApp }: DockProps) {
 
   return (
     <motion.div
-      className="fixed bottom-4 left-1/2 -translate-x-1/2 flex gap-6 bg-gray-800/80 backdrop-blur-md p-7 rounded-2xl z-50 shadow-lg" // Increased padding to p-7
+      className="fixed bottom-6 left-1/2 -translate-x-1/2 flex gap-4 px-6 py-4 bg-gray-900/70 backdrop-blur-lg rounded-2xl shadow-lg z-50"
       onMouseMove={(e) => {
         const { left, right } = e.currentTarget.getBoundingClientRect();
         mouseLeft.set(e.clientX - left);
@@ -88,24 +88,21 @@ function DockItem({ app, openApp, mouseLeft }: DockItemProps) {
           <motion.div
             ref={ref}
             style={{ x: xSpring, scale: scaleSpring, y }}
-            className="group relative"
+            className="group relative flex flex-col items-center"
             onClick={() => {
-              animate(y, [0, -40, 0], {
+              animate(y, [0, -20, 0], {
                 repeat: 2,
                 duration: 0.7,
-                ease: [
-                  [0, 0, 0.2, 1],
-                  [0.8, 0, 1, 1],
-                ],
+                ease: "easeInOut",
               });
               if (!app.link) openApp(app.name);
             }}
           >
             {app.link ? (
               <a href={app.link} target="_blank" rel="noopener noreferrer">
-                <img
+                <motion.img
                   src={app.icon}
-                  className="w-12 h-12 cursor-pointer"
+                  className="w-12 h-12 cursor-pointer hover:scale-110 transition-transform"
                   alt={app.name}
                 />
               </a>
@@ -116,9 +113,11 @@ function DockItem({ app, openApp, mouseLeft }: DockItemProps) {
                 onClick={() => openApp(app.name)}
               />
             )}
-            <div className="absolute bottom-14 left-1/2 -translate-x-1/2 bg-gray-900 text-white text-sm px-2 py-1 rounded-md opacity-0 group-hover:opacity-100 transition-opacity">
+
+            {/* 🔹 Label Above Icon (only visible on hover) */}
+            <span className="absolute -top-8 bg-gray-900 text-white text-xs px-2 py-1 rounded-md opacity-0 group-hover:opacity-100 transition-opacity">
               {app.name}
-            </div>
+            </span>
           </motion.div>
         </Tooltip.Trigger>
 

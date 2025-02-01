@@ -6,23 +6,12 @@ export default function App() {
 
   const fetchBackgroundImage = async () => {
     try {
-      const response = await fetch("http://localhost:3001/api/wallpaper"); // ✅ Use backend
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
+      const response = await fetch("http://localhost:3001/api/wallpaper");
+      if (!response.ok) throw new Error("Failed to fetch wallpaper");
       const data = await response.json();
 
-      console.log("Fetched wallpaper data:", data); // ✅ Debugging
-
-      if (data.data && data.data.length > 0) {
-        const randomWallpaper =
-          data.data[Math.floor(Math.random() * data.data.length)]; // Pick a random one
-        console.log("Selected wallpaper:", randomWallpaper.path); // ✅ Debugging
-
-        setBackgroundImage(randomWallpaper.path);
-      } else {
-        console.warn("No wallpapers found in API response!");
-      }
+      console.log("✅ Selected wallpaper:", data.path); // ✅ Debugging
+      setBackgroundImage(data.path); // ✅ Set background
     } catch (error) {
       console.error("Error fetching background image:", error);
     }
@@ -35,17 +24,20 @@ export default function App() {
   }, []);
 
   return (
-    <div
-      style={{
-        backgroundColor: "beige", // ✅ Default background
-        backgroundImage: backgroundImage ? `url(${backgroundImage})` : "none",
-        backgroundSize: "cover",
-        backgroundPosition: "center",
-        backgroundRepeat: "no-repeat",
-        height: "100vh",
-        width: "100vw",
-      }}
-    >
+    <div className="relative h-screen w-screen">
+      {/* 🔥 Semi-transparent blur overlay for better contrast */}
+      <div
+        className="absolute inset-0 backdrop-blur-lg bg-black/30"
+        style={{
+          backgroundImage: backgroundImage ? `url(${backgroundImage})` : "none",
+          backgroundSize: "cover",
+          backgroundPosition: "center",
+          backgroundRepeat: "no-repeat",
+          filter: "brightness(0.7)", // Slight darkening
+        }}
+      ></div>
+
+      {/* macOS Desktop UI */}
       <Desktop />
     </div>
   );

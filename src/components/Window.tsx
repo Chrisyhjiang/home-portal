@@ -62,10 +62,11 @@ export default function Window({ appName, closeApp, children }: WindowProps) {
         ref={nodeRef}
         initial={{ opacity: 0, scale: 0.8 }}
         animate={{ opacity: 1, scale: 1 }}
-        className="absolute bg-gray-700 rounded-lg shadow-lg flex flex-col"
+        className="absolute bg-gray-700 rounded-lg flex flex-col backdrop-blur-md border border-gray-600"
         style={{
           width: size.width,
           height: size.height,
+          boxShadow: "0px 10px 30px rgba(0, 0, 0, 0.3)", // 🔥 Soft drop shadow
         }}
       >
         {/* Window header with drag handle */}
