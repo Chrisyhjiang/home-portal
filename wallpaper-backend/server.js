@@ -8,34 +8,25 @@ const PORT = 3001;
 app.use(cors()); // Allow frontend access
 app.use(express.json());
 
-const WALLHAVEN_API_KEY = "your_api_key_here"; // Replace with your actual API key
-const WALLHAVEN_API_URL = `https://wallhaven.cc/api/v1/search?categories=111&purity=100&sorting=random&apikey=${WALLHAVEN_API_KEY}`;
+const WALLHAVEN_API_KEY = "yNgl5KWTg1vJk87R7GXIKM4YoWnuP36z"; // Replace with your actual API key
+const WALLHAVEN_API_URL = `https://wallhaven.cc/api/v1/search?categories=111&purity=100&sorting=random&apikey=${WALLHAVEN_API_KEY}&q=bright+colors`;
 
 const ALLOWED_TAGS = [
-  "rain",
-  "clouds",
-  "mountains",
-  "nature",
-  "scenery",
-  "forest",
-  "sunset",
-  "sky",
-  "water",
-  "landscape",
-  "river",
-  "beach",
-  "lake",
-  "flowers",
-  "trees",
-  "snow",
-  "stars",
-  "night",
-  "ocean",
+  "bright",
+  "colorful",
+  "vibrant",
+  "rainbow",
+  "sunlight",
+  "daylight",
+  "glowing",
+  "shiny",
+  "illuminated",
+  "golden",
 ];
 
 app.get("/api/wallpaper", async (req, res) => {
   try {
-    console.log("🔄 Fetching wallpapers from Wallhaven...");
+    console.log("🔄 Fetching bright-colored wallpapers from Wallhaven...");
 
     const response = await fetch(WALLHAVEN_API_URL);
     if (!response.ok) {
@@ -61,9 +52,9 @@ app.get("/api/wallpaper", async (req, res) => {
     );
 
     if (filteredWallpapers.length === 0) {
-      console.warn("⚠️ No wallpapers found, trying fallback...");
+      console.warn("⚠️ No bright wallpapers found, trying fallback...");
       const fallbackResponse = await fetch(
-        `https://wallhaven.cc/api/v1/search?categories=100&purity=100&sorting=random&apikey=${WALLHAVEN_API_KEY}&q=nature`
+        `https://wallhaven.cc/api/v1/search?categories=100&purity=100&sorting=random&apikey=${WALLHAVEN_API_KEY}&q=vivid+colors`
       );
       const fallbackData = await fallbackResponse.json();
 
