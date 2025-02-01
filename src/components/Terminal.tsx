@@ -18,14 +18,14 @@ export default function Terminal() {
 
   const handleCommand = (event: React.FormEvent) => {
     event.preventDefault();
-    let newOutput = [...output, `> ${input}`];
-  
+    let newOutput = [...output, `$ ${input}`];
+
     const args = input.split(" ");
     const command = args[0];
-  
+
     if (command === "show" && args[1]?.endsWith(".pdf")) {
-      const filePath = `/docs/${args[1]}`; // Ensure the case matches the actual file name
-      console.log("Opening PDF:", filePath); // Debugging
+      const filePath = `/docs/${args[1]}`;
+      console.log("Opening PDF:", filePath);
       newOutput.push(`Opening ${args[1]}...`);
       openApp("PDFViewer", { filePath });
     } else if (commands[command]) {
@@ -33,7 +33,7 @@ export default function Terminal() {
     } else {
       newOutput.push("Command not found. Type 'help' for a list of commands.");
     }
-  
+
     setOutput(newOutput);
     setInput("");
   };
@@ -43,13 +43,13 @@ export default function Terminal() {
       {output.map((line, index) => (
         <div key={index}>{line}</div>
       ))}
-      <form onSubmit={handleCommand} className="mt-2">
-        <span>$ </span>
+      <form onSubmit={handleCommand} className="flex">
+        <span className="mr-2">$</span>
         <input
           type="text"
           value={input}
           onChange={(e) => setInput(e.target.value)}
-          className="bg-black border-none outline-none text-green-400 w-full"
+          className="bg-black border-none outline-none text-green-400 flex-grow"
           autoFocus
         />
       </form>
