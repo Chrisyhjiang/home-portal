@@ -1,0 +1,71 @@
+import { useAppStore } from "@hooks/useAppStore";
+import Topbar from "@features/Topbar/components/Topbar";
+import Dock from "@features/Dock/components/Dock";
+import Finder from "@features/Finder/components/Finder";
+import Terminal from "@features/Terminal/components/Terminal";
+import Window from "@features/Window/components/Window";
+import PDFViewer from "@features/PDFViewer/components/PDFViewer";
+import { useRef, useEffect } from "react";
+import Draggable from "react-draggable";
+import { motion } from "framer-motion";
+
+export default function Desktop() {
+  const { openApps, openApp, closeApp } = useAppStore();
+
+  console.log("openApps:", openApps); // ✅ Debugging
+
+  // ✅ Persistent dragRefs that never reset
+  const dragRefs = useRef<Record<string, React.RefObject<HTMLDivElement>>>({});
+
+  // ✅ Ensure refs exist for all openApps (without reinitializing on every render)
+  useEffect(() => {
+    openApps.forEach(({ appName }) => {
+      if (!dragRefs.current[appName]) {
+        dragRefs.current[appName] = { current: null };
+      }
+    });
+  }, [openApps]);
+
+  return (
+    <div className="h-screen w-screen relative flex flex-col overflow-hidden pt-12 pb-20">
+      <Topbar />
+
+      <div className="flex-1 relative z-10 p-4">
+        {openApps.map(({ appName, filePath }, index) => {
+          if (!dragRefs.current[appName]) {
+            dragRefs.current[appName] = { current: null };
+          }
+
+          return (
+            <Draggable
+              key={appName}
+              nodeRef={dragRefs.current[appName]}
+              bounds="parent"
+            >
+              <motion.div
+                ref={dragRefs.current[appName]}
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                className="absolute bg-gray-700 rounded-lg shadow-lg flex flex-col backdrop-blur-xl border border-gray-600"
+                style={{ zIndex: 20 + index }}
+              >
+                <Window appName={appName} closeApp={() => closeApp(appName)}>
+                  {appName === "Finder" && <Finder />}
+                  {appName === "Terminal" && <Terminal />}
+                  {appName === "PDFViewer" && (
+                    <PDFViewer
+                      filePath={filePath}
+                      onClose={() => closeApp(appName)}
+                    />
+                  )}
+                </Window>
+              </motion.div>
+            </Draggable>
+          );
+        })}
+      </div>
+
+      <Dock openApp={openApp} />
+    </div>
+  );
+}

@@ -1,54 +1,34 @@
-import { defineConfig } from 'vite'
-import react from '@vitejs/plugin-react'
 
-// https://vite.dev/config/
-export default defineConfig({
-  plugins: [react()],
-})
-import { useEffect, useState } from "react";
+File: ./src/App.tsx
+
 import Desktop from "./components/Desktop";
 
 export default function App() {
-  const [backgroundImage, setBackgroundImage] = useState<string | null>(null);
-
-  const fetchBackgroundImage = async () => {
-    try {
-      const response = await fetch("http://localhost:3001/api/wallpaper");
-      if (!response.ok) throw new Error("Failed to fetch wallpaper");
-      const data = await response.json();
-
-      console.log("✅ Selected wallpaper:", data.path); // ✅ Debugging
-      setBackgroundImage(data.path); // ✅ Set background
-    } catch (error) {
-      console.error("Error fetching background image:", error);
-    }
-  };
-
-  useEffect(() => {
-    fetchBackgroundImage();
-    const interval = setInterval(fetchBackgroundImage, 180000); // Refresh every 3 min
-    return () => clearInterval(interval);
-  }, []);
-
   return (
     <div className="relative h-screen w-screen">
-      {/* 🔥 Semi-transparent blur overlay for better contrast */}
-      <div
-        className="absolute inset-0 backdrop-blur-lg bg-black/30"
-        style={{
-          backgroundImage: backgroundImage ? `url(${backgroundImage})` : "none",
-          backgroundSize: "cover",
-          backgroundPosition: "center",
-          backgroundRepeat: "no-repeat",
-          filter: "brightness(0.7)", // Slight darkening
-        }}
-      ></div>
+      {/* Video Background */}
+      <video
+        autoPlay
+        loop
+        muted
+        playsInline
+        className="absolute inset-0 w-full h-full object-cover z-0"
+      >
+        <source src="/background.mp4" type="video/mp4" />
+        Your browser does not support the video tag.
+      </video>
 
-      {/* macOS Desktop UI */}
-      <Desktop />
+      {/* Content Overlay */}
+      <div className="relative z-10">
+        {/* macOS Desktop UI */}
+        <Desktop />
+      </div>
     </div>
   );
 }
+
+File: ./src/main.tsx
+
 import { createRoot } from 'react-dom/client';
 import "./styles/index.css";
 import App from './App.tsx';
@@ -56,7 +36,113 @@ import App from './App.tsx';
 createRoot(document.getElementById('root')!).render(
   // 🚨 Remove StrictMode to avoid warnings
   <App />
-);import { useAppStore } from "../store/useAppStore";
+);
+File: ./src/features/PDFViewer/components/PDFViewer.tsx
+
+interface PDFViewerProps {
+  filePath?: string;
+  onClose: () => void;
+}
+
+const PDFViewer: React.FC<PDFViewerProps> = ({ filePath, onClose }) => {
+  if (!filePath || !filePath.endsWith(".pdf")) {
+    return (
+      <div className="p-4 text-white bg-red-500">No valid PDF selected.</div>
+    );
+  }
+
+  const correctedPath = filePath.startsWith("/docs/")
+    ? filePath
+    : `/docs/${filePath.replace(/^\/?public\//, "")}`;
+
+  return (
+    <div className="w-full h-full">
+      {/* Close Button */}
+      <div className="absolute top-2 left-2 flex gap-2 z-50">
+        <button
+          onClick={onClose}
+          className="bg-gray-800 text-white p-2 rounded-full hover:bg-gray-700"
+        >
+          ⨉
+        </button>
+      </div>
+
+      {/* PDF Viewer */}
+      <iframe
+        src={correctedPath}
+        className="w-full h-full border-none"
+        title="PDF Viewer"
+      />
+    </div>
+  );
+};
+
+export default PDFViewer;
+
+File: ./src/features/Terminal/components/Terminal.tsx
+
+import { useState } from "react";
+import { useAppStore } from "../store/useAppStore";
+
+export default function Terminal() {
+  const [output, setOutput] = useState<string[]>(["Welcome to Terminal"]);
+  const [input, setInput] = useState("");
+  const { openApp } = useAppStore();
+
+  const commands = {
+    ls: () => "Resume.pdf  Project1  Project2",
+    clear: () => {
+      setOutput([]);
+      return "";
+    },
+    help: () =>
+      "Available commands:\n- ls (List files)\n- show <file> (View PDF files)\n- clear (Clear terminal)\n- help (Show this help message)",
+  };
+
+  const handleCommand = (event: React.FormEvent) => {
+    event.preventDefault();
+    let newOutput = [...output, `$ ${input}`];
+
+    const args = input.split(" ");
+    const command = args[0];
+
+    if (command === "show" && args[1]?.endsWith(".pdf")) {
+      const filePath = `/docs/${args[1]}`;
+      console.log("Opening PDF:", filePath);
+      newOutput.push(`Opening ${args[1]}...`);
+      openApp("PDFViewer", { filePath });
+    } else if (commands[command]) {
+      newOutput.push(commands[command]());
+    } else {
+      newOutput.push("Command not found. Type 'help' for a list of commands.");
+    }
+
+    setOutput(newOutput);
+    setInput("");
+  };
+
+  return (
+    <div className="p-4 bg-black text-green-400 font-mono w-full h-full overflow-auto">
+      {output.map((line, index) => (
+        <div key={index}>{line}</div>
+      ))}
+      <form onSubmit={handleCommand} className="flex">
+        <span className="mr-2">$</span>
+        <input
+          type="text"
+          value={input}
+          onChange={(e) => setInput(e.target.value)}
+          className="bg-black border-none outline-none text-green-400 flex-grow"
+          autoFocus
+        />
+      </form>
+    </div>
+  );
+}
+
+File: ./src/features/Desktop/components/Desktop.tsx
+
+import { useAppStore } from "../store/useAppStore";
 import Topbar from "./Topbar";
 import Dock from "./Dock";
 import Finder from "./Finder";
@@ -128,330 +214,9 @@ export default function Desktop() {
     </div>
   );
 }
-import { useEffect, useState } from "react";
 
-export default function Topbar() {
-  const [time, setTime] = useState(new Date());
+File: ./src/features/Window/components/Window.tsx
 
-  useEffect(() => {
-    const timer = setInterval(() => setTime(new Date()), 1000);
-    return () => clearInterval(timer);
-  }, []);
-
-  return (
-    <div className="fixed top-0 left-0 w-full h-10 bg-gray-900/80 text-white flex items-center justify-between px-4 z-50 shadow-md">
-      <div className="flex items-center gap-4">
-        <span className="text-lg"></span>
-        <span className="text-sm">Finder</span>
-      </div>
-      <div className="flex gap-4 text-sm">
-        <span>File</span>
-        <span>Edit</span>
-        <span>View</span>
-        <span>Go</span>
-        <span>Window</span>
-        <span>Help</span>
-      </div>
-      <div className="text-sm">
-        {time.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
-      </div>
-    </div>
-  );
-}
-import { useAppStore } from "../store/useAppStore";
-
-export default function Finder() {
-  const { openApp } = useAppStore(); // ✅ Use store to open PDFViewer
-
-  const files = [
-    { name: "Resume.pdf", path: "/docs/Resume.pdf" }, // ✅ Ensure exact casing
-    { name: "Project 1", path: "https://github.com/Chrisyhjiang/project1" },
-    { name: "Project 2", path: "https://github.com/Chrisyhjiang/project2" },
-  ];
-
-  return (
-    <div className="p-4 bg-gray-800 text-white w-full h-full">
-      <h2 className="text-xl font-bold">Finder</h2>
-      <ul className="mt-4">
-        {files.map((file) => (
-          <li key={file.name} className="mt-2">
-            {file.path.startsWith("http") ? (
-              // ✅ External links open in new tab
-              <a
-                href={file.path}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-blue-400 hover:underline"
-              >
-                {file.name}
-              </a>
-            ) : (
-              // ✅ Open PDF inside the app
-              <button
-                onClick={() => openApp("PDFViewer", { filePath: file.path })}
-                className="text-blue-400 hover:underline"
-              >
-                {file.name}
-              </button>
-            )}
-          </li>
-        ))}
-      </ul>
-    </div>
-  );
-}
-import { useState } from "react";
-import { useAppStore } from "../store/useAppStore";
-
-export default function Terminal() {
-  const [output, setOutput] = useState<string[]>(["Welcome to Terminal"]);
-  const [input, setInput] = useState("");
-  const { openApp } = useAppStore();
-
-  const commands = {
-    ls: () => "Resume.pdf  Project1  Project2",
-    clear: () => {
-      setOutput([]);
-      return "";
-    },
-    help: () =>
-      "Available commands:\n- ls (List files)\n- show <file> (View PDF files)\n- clear (Clear terminal)\n- help (Show this help message)",
-  };
-
-  const handleCommand = (event: React.FormEvent) => {
-    event.preventDefault();
-    let newOutput = [...output, `$ ${input}`];
-
-    const args = input.split(" ");
-    const command = args[0];
-
-    if (command === "show" && args[1]?.endsWith(".pdf")) {
-      const filePath = `/docs/${args[1]}`;
-      console.log("Opening PDF:", filePath);
-      newOutput.push(`Opening ${args[1]}...`);
-      openApp("PDFViewer", { filePath });
-    } else if (commands[command]) {
-      newOutput.push(commands[command]());
-    } else {
-      newOutput.push("Command not found. Type 'help' for a list of commands.");
-    }
-
-    setOutput(newOutput);
-    setInput("");
-  };
-
-  return (
-    <div className="p-4 bg-black text-green-400 font-mono w-full h-full overflow-auto">
-      {output.map((line, index) => (
-        <div key={index}>{line}</div>
-      ))}
-      <form onSubmit={handleCommand} className="flex">
-        <span className="mr-2">$</span>
-        <input
-          type="text"
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
-          className="bg-black border-none outline-none text-green-400 flex-grow"
-          autoFocus
-        />
-      </form>
-    </div>
-  );
-}
-import React, { useRef } from "react";
-import * as Tooltip from "@radix-ui/react-tooltip";
-import {
-  motion,
-  useMotionValue,
-  useSpring,
-  useTransform,
-  animate,
-  MotionValue,
-} from "framer-motion";
-import AppIcon from "./AppIcon";
-import { apps } from "../constants";
-
-interface DockProps {
-  openApp: (app: string) => void;
-}
-
-const SCALE = 1.75; // Reduced from 2.25
-const DISTANCE = 70; // Reduced from 90
-const NUDGE = 20; // Reduced from 30
-const SPRING = {
-  mass: 0.1,
-  stiffness: 170,
-  damping: 12,
-};
-
-export default function Dock({ openApp }: DockProps) {
-  const mouseLeft = useMotionValue(-Infinity);
-  const mouseRight = useMotionValue(-Infinity);
-
-  return (
-    <motion.div className="group relative flex flex-col items-center">
-      <motion.img
-        src={app.icon}
-        className="w-12 h-12 cursor-pointer hover:scale-110 transition-transform"
-        onClick={() => openApp(app.name)}
-        alt={app.name}
-      />
-      {/* Keep labels ABOVE icons and only show on hover */}
-      <span className="absolute -top-6 bg-gray-900 text-white text-xs px-2 py-1 rounded-md opacity-0 group-hover:opacity-100 transition-opacity">
-        {app.name}
-      </span>
-    </motion.div>
-  );
-}
-
-interface DockItemProps {
-  app: { name: string; icon: string; link?: string };
-  openApp: (app: string) => void;
-  mouseLeft: MotionValue<number>;
-}
-
-function DockItem({ app, openApp, mouseLeft }: DockItemProps) {
-  const ref = useRef<HTMLDivElement>(null);
-
-  const distance = useTransform(() => {
-    const bounds = ref.current
-      ? { x: ref.current.offsetLeft, w: ref.current.offsetWidth }
-      : { x: 0, w: 0 };
-    return mouseLeft.get() - bounds.x - bounds.w / 2;
-  });
-
-  const scale = useTransform(distance, [-DISTANCE, 0, DISTANCE], [1, SCALE, 1]);
-  const scaleSpring = useSpring(scale, SPRING);
-
-  const x = useTransform(() => {
-    const d = distance.get();
-    if (d === -Infinity) return 0;
-    if (Math.abs(d) > DISTANCE) return Math.sign(d) * -1 * NUDGE;
-    return (-d / DISTANCE) * NUDGE * scale.get();
-  });
-  const xSpring = useSpring(x, SPRING);
-  const y = useMotionValue(0);
-
-  return (
-    <Tooltip.Provider>
-      <Tooltip.Root>
-        <Tooltip.Trigger asChild>
-          <motion.div
-            ref={ref}
-            style={{ x: xSpring, scale: scaleSpring, y }}
-            className="group relative"
-            onClick={() => {
-              animate(y, [0, -40, 0], {
-                repeat: 2,
-                duration: 0.7,
-                ease: [
-                  [0, 0, 0.2, 1],
-                  [0.8, 0, 1, 1],
-                ],
-              });
-              if (!app.link) openApp(app.name);
-            }}
-          >
-            {app.link ? (
-              <a href={app.link} target="_blank" rel="noopener noreferrer">
-                <img
-                  src={app.icon}
-                  className="w-12 h-12 cursor-pointer"
-                  alt={app.name}
-                />
-              </a>
-            ) : (
-              <AppIcon
-                name={app.name}
-                icon={app.icon}
-                onClick={() => openApp(app.name)}
-              />
-            )}
-            <div className="shadow-2xl bg-gray-900/80 backdrop-blur-md p-3 rounded-2xl">
-              {app.name}
-            </div>
-          </motion.div>
-        </Tooltip.Trigger>
-
-        <Tooltip.Portal>
-          <Tooltip.Content
-            sideOffset={8}
-            className="bg-gray-700 px-2 py-1.5 text-sm rounded text-white border border-gray-600 shadow"
-          >
-            {app.name}
-            <Tooltip.Arrow />
-          </Tooltip.Content>
-        </Tooltip.Portal>
-      </Tooltip.Root>
-    </Tooltip.Provider>
-  );
-}
-import { motion } from "framer-motion";
-
-interface AppIconProps {
-  name: string;
-  icon: string;
-  onClick?: () => void;
-  link?: string;
-}
-
-export default function AppIcon({ name, icon, onClick, link }: AppIconProps) {
-  return link ? (
-    <a href={link} target="_blank" rel="noopener noreferrer">
-      <motion.img
-        src={icon}
-        className="w-12 h-12 cursor-pointer hover:scale-110 transition-transform"
-        alt={name}
-      />
-    </a>
-  ) : (
-    <motion.img
-      src={icon}
-      className="w-12 h-12 cursor-pointer hover:scale-110 transition-transform"
-      onClick={onClick}
-      alt={name}
-    />
-  );
-}
-interface PDFViewerProps {
-  filePath?: string;
-  onClose: () => void;
-}
-
-const PDFViewer: React.FC<PDFViewerProps> = ({ filePath, onClose }) => {
-  if (!filePath || !filePath.endsWith(".pdf")) {
-    return (
-      <div className="p-4 text-white bg-red-500">No valid PDF selected.</div>
-    );
-  }
-
-  const correctedPath = filePath.startsWith("/docs/")
-    ? filePath
-    : `/docs/${filePath.replace(/^\/?public\//, "")}`;
-
-  return (
-    <div className="w-full h-full">
-      {/* Close Button */}
-      <div className="absolute top-2 left-2 flex gap-2 z-50">
-        <button
-          onClick={onClose}
-          className="bg-gray-800 text-white p-2 rounded-full hover:bg-gray-700"
-        >
-          ⨉
-        </button>
-      </div>
-
-      {/* PDF Viewer */}
-      <iframe
-        src={correctedPath}
-        className="w-full h-full border-none"
-        title="PDF Viewer"
-      />
-    </div>
-  );
-};
-
-export default PDFViewer;
 import { motion } from "framer-motion";
 import Draggable from "react-draggable";
 import { useRef, useEffect, useState } from "react";
@@ -548,13 +313,262 @@ export default function Window({ appName, closeApp, children }: WindowProps) {
     </Draggable>
   );
 }
-/// <reference types="vite/client" />
-export const apps = [
-    { name: "Finder", icon: "/icons/finder-icon.png" },
-    { name: "Terminal", icon: "/icons/terminal.png" },
-    { name: "GitHub", icon: "/icons/github.png", link: "https://github.com/Chrisyhjiang" }
+
+File: ./src/features/Finder/components/Finder.tsx
+
+import { useAppStore } from "../../hooks/useAppStore";
+
+export default function Finder() {
+  const { openApp } = useAppStore(); // ✅ Use store to open PDFViewer
+
+  const files = [
+    { name: "Resume.pdf", path: "/docs/Resume.pdf" }, // ✅ Ensure exact casing
+    { name: "Project 1", path: "https://github.com/Chrisyhjiang/project1" },
+    { name: "Project 2", path: "https://github.com/Chrisyhjiang/project2" },
   ];
-  import { create } from "zustand";
+
+  return (
+    <div className="p-4 bg-gray-800 text-white w-full h-full">
+      <h2 className="text-xl font-bold">Finder</h2>
+      <ul className="mt-4">
+        {files.map((file) => (
+          <li key={file.name} className="mt-2">
+            {file.path.startsWith("http") ? (
+              // ✅ External links open in new tab
+              <a
+                href={file.path}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-blue-400 hover:underline"
+              >
+                {file.name}
+              </a>
+            ) : (
+              // ✅ Open PDF inside the app
+              <button
+                onClick={() => openApp("PDFViewer", { filePath: file.path })}
+                className="text-blue-400 hover:underline"
+              >
+                {file.name}
+              </button>
+            )}
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
+File: ./src/features/Topbar/components/Topbar.tsx
+
+import { useEffect, useState } from "react";
+
+export default function Topbar() {
+  const [time, setTime] = useState(new Date());
+
+  useEffect(() => {
+    const timer = setInterval(() => setTime(new Date()), 1000);
+    return () => clearInterval(timer);
+  }, []);
+
+  return (
+    <div className="fixed top-0 left-0 w-full h-10 bg-gray-900/80 text-white flex items-center justify-between px-4 z-50 shadow-md">
+      <div className="flex items-center gap-4">
+        <span className="text-lg"></span>
+        <span className="text-sm">Finder</span>
+      </div>
+      <div className="flex gap-4 text-sm">
+        <span>File</span>
+        <span>Edit</span>
+        <span>View</span>
+        <span>Go</span>
+        <span>Window</span>
+        <span>Help</span>
+      </div>
+      <div className="text-sm">
+        {time.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+      </div>
+    </div>
+  );
+}
+
+File: ./src/features/Dock/components/Dock.tsx
+
+import React, { useRef } from "react";
+import * as Tooltip from "@radix-ui/react-tooltip";
+import {
+  motion,
+  useMotionValue,
+  useSpring,
+  useTransform,
+  animate,
+  MotionValue,
+} from "framer-motion";
+import AppIcon from "../AppIcon/AppIcon";
+import { apps } from "../../constants";
+
+interface DockProps {
+  openApp: (app: string) => void;
+}
+
+const SCALE = 1.75;
+const DISTANCE = 70;
+const NUDGE = 20;
+const SPRING = {
+  mass: 0.1,
+  stiffness: 170,
+  damping: 12,
+};
+
+export default function Dock({ openApp }: DockProps) {
+  const mouseLeft = useMotionValue(-Infinity);
+  const mouseRight = useMotionValue(-Infinity);
+
+  return (
+    <motion.div
+      className="fixed bottom-6 left-1/2 -translate-x-1/2 flex gap-4 px-6 py-4 bg-gray-900/70 backdrop-blur-lg rounded-2xl shadow-lg z-50"
+      onMouseMove={(e) => {
+        const { left, right } = e.currentTarget.getBoundingClientRect();
+        mouseLeft.set(e.clientX - left);
+        mouseRight.set(right - e.clientX);
+      }}
+      onMouseLeave={() => {
+        mouseLeft.set(-Infinity);
+        mouseRight.set(-Infinity);
+      }}
+    >
+      {apps.map((app) => (
+        <DockItem
+          key={app.name}
+          app={app}
+          openApp={openApp}
+          mouseLeft={mouseLeft}
+        />
+      ))}
+    </motion.div>
+  );
+}
+
+interface DockItemProps {
+  app: { name: string; icon: string; link?: string };
+  openApp: (app: string) => void;
+  mouseLeft: MotionValue<number>;
+}
+
+function DockItem({ app, openApp, mouseLeft }: DockItemProps) {
+  const ref = useRef<HTMLDivElement>(null);
+
+  const distance = useTransform(() => {
+    const bounds = ref.current
+      ? { x: ref.current.offsetLeft, w: ref.current.offsetWidth }
+      : { x: 0, w: 0 };
+    return mouseLeft.get() - bounds.x - bounds.w / 2;
+  });
+
+  const scale = useTransform(distance, [-DISTANCE, 0, DISTANCE], [1, SCALE, 1]);
+  const scaleSpring = useSpring(scale, SPRING);
+
+  const x = useTransform(() => {
+    const d = distance.get();
+    if (d === -Infinity) return 0;
+    if (Math.abs(d) > DISTANCE) return Math.sign(d) * -1 * NUDGE;
+    return (-d / DISTANCE) * NUDGE * scale.get();
+  });
+  const xSpring = useSpring(x, SPRING);
+  const y = useMotionValue(0);
+
+  return (
+    <Tooltip.Provider>
+      <Tooltip.Root>
+        <Tooltip.Trigger asChild>
+          <motion.div
+            ref={ref}
+            style={{ x: xSpring, scale: scaleSpring, y }}
+            className="group relative flex flex-col items-center"
+            onClick={() => {
+              animate(y, [0, -20, 0], {
+                repeat: 2,
+                duration: 0.7,
+                ease: "easeInOut",
+              });
+              if (!app.link) openApp(app.name);
+            }}
+          >
+            {app.link ? (
+              <a href={app.link} target="_blank" rel="noopener noreferrer">
+                <motion.img
+                  src={app.icon}
+                  className="w-12 h-12 cursor-pointer hover:scale-110 transition-transform rounded-full border-2 border-gray-300"
+                  alt={app.name}
+                />
+              </a>
+            ) : (
+              <AppIcon
+                name={app.name}
+                icon={app.icon}
+                onClick={() => openApp(app.name)}
+                className="w-12 h-12 cursor-pointer hover:scale-110 transition-transform rounded-full border-2 border-gray-300"
+              />
+            )}
+
+            {/* 🔹 Label Above Icon (only visible on hover) */}
+            <span className="absolute -top-8 bg-gray-900 text-white text-xs px-2 py-1 rounded-md opacity-0 group-hover:opacity-100 transition-opacity">
+              {app.name}
+            </span>
+          </motion.div>
+        </Tooltip.Trigger>
+
+        <Tooltip.Portal>
+          <Tooltip.Content
+            sideOffset={8}
+            className="bg-gray-700 px-2 py-1.5 text-sm rounded text-white border border-gray-600 shadow"
+          >
+            {app.name}
+            <Tooltip.Arrow />
+          </Tooltip.Content>
+        </Tooltip.Portal>
+      </Tooltip.Root>
+    </Tooltip.Provider>
+  );
+}
+
+File: ./src/shared/components/AppIcon/AppIcon.tsx
+
+import { motion } from "framer-motion";
+
+interface AppIconProps {
+  name: string;
+  icon: string;
+  onClick?: () => void;
+  link?: string;
+}
+
+export default function AppIcon({ name, icon, onClick, link }: AppIconProps) {
+  return link ? (
+    <a href={link} target="_blank" rel="noopener noreferrer">
+      <motion.img
+        src={icon}
+        className="w-12 h-12 cursor-pointer hover:scale-110 transition-transform"
+        alt={name}
+      />
+    </a>
+  ) : (
+    <motion.img
+      src={icon}
+      className="w-12 h-12 cursor-pointer hover:scale-110 transition-transform"
+      onClick={onClick}
+      alt={name}
+    />
+  );
+}
+
+File: ./src/vite-env.d.ts
+
+/// <reference types="vite/client" />
+
+File: ./src/hooks/useAppStore.ts
+
+import { create } from "zustand";
 
 interface AppState {
   openApps: { appName: string; filePath?: string }[];
@@ -575,53 +589,59 @@ export const useAppStore = create<AppState>((set) => ({
 }));
 
 
-Directory structure excluding node_modules:
+Directory structure of src excluding node_modules:
 
-.
-├── README.md
-├── eslint.config.js
-├── index.html
-├── output.txt
-├── package-lock.json
-├── package.json
-├── postcss.config.js
-├── public
-│   ├── docs
-│   │   └── Resume.pdf
-│   ├── icons
-│   │   ├── finder-icon.png
-│   │   ├── github.png
-│   │   └── terminal.png
-│   └── vite.svg
-├── script.sh
-├── src
-│   ├── App.tsx
-│   ├── assets
-│   │   └── react.svg
-│   ├── components
-│   │   ├── AppIcon.tsx
-│   │   ├── Desktop.tsx
-│   │   ├── Dock.tsx
-│   │   ├── Finder.tsx
-│   │   ├── PDFViewer.tsx
-│   │   ├── Terminal.tsx
-│   │   ├── Topbar.tsx
-│   │   └── Window.tsx
-│   ├── constants.ts
-│   ├── main.tsx
-│   ├── store
-│   │   └── useAppStore.ts
-│   ├── styles
-│   │   ├── global.css
-│   │   ├── index.css
-│   │   └── mac_background.css
-│   └── vite-env.d.ts
-├── tailwind.config.js
-├── tsconfig.app.json
-├── tsconfig.json
-├── tsconfig.node.json
-├── vite.config.ts
-└── wallpaper-backend
-    └── server.js
+./src
+├── App.tsx
+├── assets
+│   └── react.svg
+├── features
+│   ├── Desktop
+│   │   ├── components
+│   │   │   └── Desktop.tsx
+│   │   ├── hooks
+│   │   └── styles
+│   ├── Dock
+│   │   ├── components
+│   │   │   └── Dock.tsx
+│   │   ├── hooks
+│   │   └── styles
+│   ├── Finder
+│   │   ├── components
+│   │   │   └── Finder.tsx
+│   │   ├── hooks
+│   │   └── styles
+│   ├── PDFViewer
+│   │   ├── components
+│   │   │   └── PDFViewer.tsx
+│   │   ├── hooks
+│   │   └── styles
+│   ├── Terminal
+│   │   ├── components
+│   │   │   └── Terminal.tsx
+│   │   ├── hooks
+│   │   └── styles
+│   ├── Topbar
+│   │   ├── components
+│   │   │   └── Topbar.tsx
+│   │   ├── hooks
+│   │   └── styles
+│   └── Window
+│       ├── components
+│       │   └── Window.tsx
+│       ├── hooks
+│       └── styles
+├── hooks
+│   └── useAppStore.ts
+├── main.tsx
+├── shared
+│   └── components
+│       └── AppIcon
+│           └── AppIcon.tsx
+├── styles
+│   ├── global.css
+│   ├── index.css
+│   └── mac_background.css
+└── vite-env.d.ts
 
-10 directories, 36 files
+36 directories, 16 files

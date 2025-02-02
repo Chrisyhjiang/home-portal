@@ -1,5 +1,15 @@
 {
-  "files": [],
+  "compilerOptions": {
+    "baseUrl": "./src",
+    "moduleResolution": "Node",
+    "paths": {
+      "@features/*": ["features/*"],
+      "@shared/*": ["shared/*"],
+      "@hooks/*": ["hooks/*"],
+      "@styles/*": ["styles/*"]
+    }
+  },
+  "include": ["src"],
   "references": [
     { "path": "./tsconfig.app.json" },
     { "path": "./tsconfig.node.json" }
