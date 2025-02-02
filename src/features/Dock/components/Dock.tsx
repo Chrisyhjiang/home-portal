@@ -98,22 +98,24 @@ function DockItem({ app, openApp, mouseLeft }: DockItemProps) {
               if (!app.link) openApp(app.name);
             }}
           >
-            {app.link ? (
-              <a href={app.link} target="_blank" rel="noopener noreferrer">
-                <motion.img
-                  src={app.icon}
-                  className="w-12 h-12 cursor-pointer hover:scale-110 transition-transform rounded-full border-2 border-gray-300"
-                  alt={app.name}
+            <div className="w-14 h-14 flex items-center justify-center rounded-full bg-gray-800 shadow-md border border-gray-300 overflow-hidden">
+              {app.link ? (
+                <a href={app.link} target="_blank" rel="noopener noreferrer">
+                  <motion.img
+                    src={app.icon}
+                    className="w-12 h-12 object-cover rounded-full"
+                    alt={app.name}
+                  />
+                </a>
+              ) : (
+                <AppIcon
+                  name={app.name}
+                  icon={app.icon}
+                  onClick={() => openApp(app.name)}
+                  className="w-12 h-12 object-cover rounded-full"
                 />
-              </a>
-            ) : (
-              <AppIcon
-                name={app.name}
-                icon={app.icon}
-                onClick={() => openApp(app.name)}
-                className="w-12 h-12 cursor-pointer hover:scale-110 transition-transform rounded-full border-2 border-gray-300"
-              />
-            )}
+              )}
+            </div>
 
             {/* 🔹 Label Above Icon (only visible on hover) */}
             <span className="absolute -top-8 bg-gray-900 text-white text-xs px-2 py-1 rounded-md opacity-0 group-hover:opacity-100 transition-opacity">
