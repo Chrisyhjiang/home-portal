@@ -108,16 +108,16 @@ function DockItem({ app, openApp, mouseLeft }: DockItemProps) {
                   />
                 </a>
               ) : (
+                // Notice we do not pass an onClick here to avoid duplication.
                 <AppIcon
                   name={app.name}
                   icon={app.icon}
-                  onClick={() => openApp(app.name)}
                   className="w-12 h-12 object-cover rounded-full"
                 />
               )}
             </div>
 
-            {/* 🔹 Label Above Icon (only visible on hover) */}
+            {/* Label Above Icon (only visible on hover) */}
             <span className="absolute -top-8 bg-gray-900 text-white text-xs px-2 py-1 rounded-md opacity-0 group-hover:opacity-100 transition-opacity">
               {app.name}
             </span>

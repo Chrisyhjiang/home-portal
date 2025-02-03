@@ -1,653 +1,6 @@
 
 File: ./src/App.tsx
 
-import Desktop from "./components/Desktop";
-
-export default function App() {
-  return (
-    <div className="relative h-screen w-screen">
-      {/* Video Background */}
-      <video
-        autoPlay
-        loop
-        muted
-        playsInline
-        className="absolute inset-0 w-full h-full object-cover z-0"
-      >
-        <source src="/background.mp4" type="video/mp4" />
-        Your browser does not support the video tag.
-      </video>
-
-      {/* Content Overlay */}
-      <div className="relative z-10">
-        {/* macOS Desktop UI */}
-        <Desktop />
-      </div>
-    </div>
-  );
-}
-
-File: ./src/main.tsx
-
-import { createRoot } from 'react-dom/client';
-import "./styles/index.css";
-import App from './App.tsx';
-
-createRoot(document.getElementById('root')!).render(
-  // 🚨 Remove StrictMode to avoid warnings
-  <App />
-);
-File: ./src/features/PDFViewer/components/PDFViewer.tsx
-
-interface PDFViewerProps {
-  filePath?: string;
-  onClose: () => void;
-}
-
-const PDFViewer: React.FC<PDFViewerProps> = ({ filePath, onClose }) => {
-  if (!filePath || !filePath.endsWith(".pdf")) {
-    return (
-      <div className="p-4 text-white bg-red-500">No valid PDF selected.</div>
-    );
-  }
-
-  const correctedPath = filePath.startsWith("/docs/")
-    ? filePath
-    : `/docs/${filePath.replace(/^\/?public\//, "")}`;
-
-  return (
-    <div className="w-full h-full">
-      {/* Close Button */}
-      <div className="absolute top-2 left-2 flex gap-2 z-50">
-        <button
-          onClick={onClose}
-          className="bg-gray-800 text-white p-2 rounded-full hover:bg-gray-700"
-        >
-          ⨉
-        </button>
-      </div>
-
-      {/* PDF Viewer */}
-      <iframe
-        src={correctedPath}
-        className="w-full h-full border-none"
-        title="PDF Viewer"
-      />
-    </div>
-  );
-};
-
-export default PDFViewer;
-
-File: ./src/features/Terminal/components/Terminal.tsx
-
-import { useState } from "react";
-import { useAppStore } from "../store/useAppStore";
-
-export default function Terminal() {
-  const [output, setOutput] = useState<string[]>(["Welcome to Terminal"]);
-  const [input, setInput] = useState("");
-  const { openApp } = useAppStore();
-
-  const commands = {
-    ls: () => "Resume.pdf  Project1  Project2",
-    clear: () => {
-      setOutput([]);
-      return "";
-    },
-    help: () =>
-      "Available commands:\n- ls (List files)\n- show <file> (View PDF files)\n- clear (Clear terminal)\n- help (Show this help message)",
-  };
-
-  const handleCommand = (event: React.FormEvent) => {
-    event.preventDefault();
-    let newOutput = [...output, `$ ${input}`];
-
-    const args = input.split(" ");
-    const command = args[0];
-
-    if (command === "show" && args[1]?.endsWith(".pdf")) {
-      const filePath = `/docs/${args[1]}`;
-      console.log("Opening PDF:", filePath);
-      newOutput.push(`Opening ${args[1]}...`);
-      openApp("PDFViewer", { filePath });
-    } else if (commands[command]) {
-      newOutput.push(commands[command]());
-    } else {
-      newOutput.push("Command not found. Type 'help' for a list of commands.");
-    }
-
-    setOutput(newOutput);
-    setInput("");
-  };
-
-  return (
-    <div className="p-4 bg-black text-green-400 font-mono w-full h-full overflow-auto">
-      {output.map((line, index) => (
-        <div key={index}>{line}</div>
-      ))}
-      <form onSubmit={handleCommand} className="flex">
-        <span className="mr-2">$</span>
-        <input
-          type="text"
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
-          className="bg-black border-none outline-none text-green-400 flex-grow"
-          autoFocus
-        />
-      </form>
-    </div>
-  );
-}
-
-File: ./src/features/Desktop/components/Desktop.tsx
-
-import { useAppStore } from "../store/useAppStore";
-import Topbar from "./Topbar";
-import Dock from "./Dock";
-import Finder from "./Finder";
-import Terminal from "./Terminal";
-import Window from "./Window";
-import PDFViewer from "./PDFViewer";
-import { useRef, useEffect } from "react";
-import Draggable from "react-draggable";
-import { motion } from "framer-motion";
-import "../styles/mac_background.css";
-
-export default function Desktop() {
-  const { openApps, openApp, closeApp } = useAppStore();
-
-  console.log("openApps:", openApps); // ✅ Debugging
-
-  // ✅ Persistent dragRefs that never reset
-  const dragRefs = useRef<Record<string, React.RefObject<HTMLDivElement>>>({});
-
-  // ✅ Ensure refs exist for all openApps (without reinitializing on every render)
-  useEffect(() => {
-    openApps.forEach(({ appName }) => {
-      if (!dragRefs.current[appName]) {
-        dragRefs.current[appName] = { current: null };
-      }
-    });
-  }, [openApps]);
-
-  return (
-    <div className="h-screen w-screen relative flex flex-col overflow-hidden pt-12 pb-20">
-      <Topbar />
-
-      <div className="flex-1 relative z-10 p-4">
-        {openApps.map(({ appName, filePath }, index) => {
-          if (!dragRefs.current[appName]) {
-            dragRefs.current[appName] = { current: null };
-          }
-
-          return (
-            <Draggable
-              key={appName}
-              nodeRef={dragRefs.current[appName]}
-              bounds="parent"
-            >
-              <motion.div
-                ref={dragRefs.current[appName]}
-                initial={{ opacity: 0, scale: 0.9 }}
-                animate={{ opacity: 1, scale: 1 }}
-                className="absolute bg-gray-700 rounded-lg shadow-lg flex flex-col backdrop-blur-xl border border-gray-600"
-                style={{ zIndex: 20 + index }}
-              >
-                <Window appName={appName} closeApp={() => closeApp(appName)}>
-                  {appName === "Finder" && <Finder />}
-                  {appName === "Terminal" && <Terminal />}
-                  {appName === "PDFViewer" && (
-                    <PDFViewer
-                      filePath={filePath}
-                      onClose={() => closeApp(appName)}
-                    />
-                  )}
-                </Window>
-              </motion.div>
-            </Draggable>
-          );
-        })}
-      </div>
-
-      <Dock openApp={openApp} />
-    </div>
-  );
-}
-
-File: ./src/features/Window/components/Window.tsx
-
-import { motion } from "framer-motion";
-import Draggable from "react-draggable";
-import { useRef, useEffect, useState } from "react";
-
-interface WindowProps {
-  appName: string;
-  closeApp: () => void;
-  children: React.ReactNode;
-}
-
-export default function Window({ appName, closeApp, children }: WindowProps) {
-  const nodeRef = useRef<HTMLDivElement | null>(null);
-  const [defaultPosition, setDefaultPosition] = useState({ x: 0, y: 0 });
-  const [size, setSize] = useState({ width: 500, height: 400 }); // Default size
-  const [isResizing, setIsResizing] = useState(false);
-
-  // Calculate the center position dynamically
-  useEffect(() => {
-    const screenWidth = window.innerWidth;
-    const screenHeight = window.innerHeight;
-    setDefaultPosition({
-      x: screenWidth / 2 - 250, // Center horizontally
-      y: screenHeight / 2 - 200, // Center vertically
-    });
-  }, []);
-
-  // Handle window resizing
-  const handleResize = (e: React.MouseEvent) => {
-    e.preventDefault();
-    const startX = e.clientX;
-    const startY = e.clientY;
-    const startWidth = size.width;
-    const startHeight = size.height;
-
-    const onMouseMove = (e: MouseEvent) => {
-      const newWidth = startWidth + (e.clientX - startX);
-      const newHeight = startHeight + (e.clientY - startY);
-      setSize({
-        width: Math.max(newWidth, 300), // Minimum width
-        height: Math.max(newHeight, 200), // Minimum height
-      });
-    };
-
-    const onMouseUp = () => {
-      window.removeEventListener("mousemove", onMouseMove);
-      window.removeEventListener("mouseup", onMouseUp);
-      setIsResizing(false);
-    };
-
-    window.addEventListener("mousemove", onMouseMove);
-    window.addEventListener("mouseup", onMouseUp);
-  };
-
-  return (
-    <Draggable
-      nodeRef={nodeRef}
-      handle=".drag-handle"
-      bounds="parent"
-      defaultPosition={defaultPosition}
-    >
-      <motion.div
-        ref={nodeRef}
-        initial={{ opacity: 0, scale: 0.8 }}
-        animate={{ opacity: 1, scale: 1 }}
-        className="absolute bg-gray-700 rounded-lg flex flex-col backdrop-blur-md border border-gray-600"
-        style={{
-          width: size.width,
-          height: size.height,
-          boxShadow: "0px 10px 30px rgba(0, 0, 0, 0.3)", // 🔥 Soft drop shadow
-        }}
-      >
-        {/* Window header with drag handle */}
-        <div className="bg-gray-600 p-2 flex justify-between text-white drag-handle">
-          <span>{appName}</span>
-          <button onClick={closeApp} className="text-red-500">
-            ⨉
-          </button>
-        </div>
-
-        {/* Window content */}
-        <div className="flex-1 flex items-center justify-center text-white overflow-hidden">
-          {children}
-        </div>
-
-        {/* Resize handle */}
-        <div
-          className="absolute bottom-0 right-0 w-4 h-4 cursor-se-resize bg-gray-600"
-          onMouseDown={(e) => {
-            setIsResizing(true);
-            handleResize(e);
-          }}
-        />
-      </motion.div>
-    </Draggable>
-  );
-}
-
-File: ./src/features/Finder/components/Finder.tsx
-
-import { useAppStore } from "../../hooks/useAppStore";
-
-export default function Finder() {
-  const { openApp } = useAppStore(); // ✅ Use store to open PDFViewer
-
-  const files = [
-    { name: "Resume.pdf", path: "/docs/Resume.pdf" }, // ✅ Ensure exact casing
-    { name: "Project 1", path: "https://github.com/Chrisyhjiang/project1" },
-    { name: "Project 2", path: "https://github.com/Chrisyhjiang/project2" },
-  ];
-
-  return (
-    <div className="p-4 bg-gray-800 text-white w-full h-full">
-      <h2 className="text-xl font-bold">Finder</h2>
-      <ul className="mt-4">
-        {files.map((file) => (
-          <li key={file.name} className="mt-2">
-            {file.path.startsWith("http") ? (
-              // ✅ External links open in new tab
-              <a
-                href={file.path}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-blue-400 hover:underline"
-              >
-                {file.name}
-              </a>
-            ) : (
-              // ✅ Open PDF inside the app
-              <button
-                onClick={() => openApp("PDFViewer", { filePath: file.path })}
-                className="text-blue-400 hover:underline"
-              >
-                {file.name}
-              </button>
-            )}
-          </li>
-        ))}
-      </ul>
-    </div>
-  );
-}
-
-File: ./src/features/Topbar/components/Topbar.tsx
-
-import { useEffect, useState } from "react";
-
-export default function Topbar() {
-  const [time, setTime] = useState(new Date());
-
-  useEffect(() => {
-    const timer = setInterval(() => setTime(new Date()), 1000);
-    return () => clearInterval(timer);
-  }, []);
-
-  return (
-    <div className="fixed top-0 left-0 w-full h-10 bg-gray-900/80 text-white flex items-center justify-between px-4 z-50 shadow-md">
-      <div className="flex items-center gap-4">
-        <span className="text-lg"></span>
-        <span className="text-sm">Finder</span>
-      </div>
-      <div className="flex gap-4 text-sm">
-        <span>File</span>
-        <span>Edit</span>
-        <span>View</span>
-        <span>Go</span>
-        <span>Window</span>
-        <span>Help</span>
-      </div>
-      <div className="text-sm">
-        {time.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
-      </div>
-    </div>
-  );
-}
-
-File: ./src/features/Dock/components/Dock.tsx
-
-import React, { useRef } from "react";
-import * as Tooltip from "@radix-ui/react-tooltip";
-import {
-  motion,
-  useMotionValue,
-  useSpring,
-  useTransform,
-  animate,
-  MotionValue,
-} from "framer-motion";
-import AppIcon from "../AppIcon/AppIcon";
-import { apps } from "../../constants";
-
-interface DockProps {
-  openApp: (app: string) => void;
-}
-
-const SCALE = 1.75;
-const DISTANCE = 70;
-const NUDGE = 20;
-const SPRING = {
-  mass: 0.1,
-  stiffness: 170,
-  damping: 12,
-};
-
-export default function Dock({ openApp }: DockProps) {
-  const mouseLeft = useMotionValue(-Infinity);
-  const mouseRight = useMotionValue(-Infinity);
-
-  return (
-    <motion.div
-      className="fixed bottom-6 left-1/2 -translate-x-1/2 flex gap-4 px-6 py-4 bg-gray-900/70 backdrop-blur-lg rounded-2xl shadow-lg z-50"
-      onMouseMove={(e) => {
-        const { left, right } = e.currentTarget.getBoundingClientRect();
-        mouseLeft.set(e.clientX - left);
-        mouseRight.set(right - e.clientX);
-      }}
-      onMouseLeave={() => {
-        mouseLeft.set(-Infinity);
-        mouseRight.set(-Infinity);
-      }}
-    >
-      {apps.map((app) => (
-        <DockItem
-          key={app.name}
-          app={app}
-          openApp={openApp}
-          mouseLeft={mouseLeft}
-        />
-      ))}
-    </motion.div>
-  );
-}
-
-interface DockItemProps {
-  app: { name: string; icon: string; link?: string };
-  openApp: (app: string) => void;
-  mouseLeft: MotionValue<number>;
-}
-
-function DockItem({ app, openApp, mouseLeft }: DockItemProps) {
-  const ref = useRef<HTMLDivElement>(null);
-
-  const distance = useTransform(() => {
-    const bounds = ref.current
-      ? { x: ref.current.offsetLeft, w: ref.current.offsetWidth }
-      : { x: 0, w: 0 };
-    return mouseLeft.get() - bounds.x - bounds.w / 2;
-  });
-
-  const scale = useTransform(distance, [-DISTANCE, 0, DISTANCE], [1, SCALE, 1]);
-  const scaleSpring = useSpring(scale, SPRING);
-
-  const x = useTransform(() => {
-    const d = distance.get();
-    if (d === -Infinity) return 0;
-    if (Math.abs(d) > DISTANCE) return Math.sign(d) * -1 * NUDGE;
-    return (-d / DISTANCE) * NUDGE * scale.get();
-  });
-  const xSpring = useSpring(x, SPRING);
-  const y = useMotionValue(0);
-
-  return (
-    <Tooltip.Provider>
-      <Tooltip.Root>
-        <Tooltip.Trigger asChild>
-          <motion.div
-            ref={ref}
-            style={{ x: xSpring, scale: scaleSpring, y }}
-            className="group relative flex flex-col items-center"
-            onClick={() => {
-              animate(y, [0, -20, 0], {
-                repeat: 2,
-                duration: 0.7,
-                ease: "easeInOut",
-              });
-              if (!app.link) openApp(app.name);
-            }}
-          >
-            {app.link ? (
-              <a href={app.link} target="_blank" rel="noopener noreferrer">
-                <motion.img
-                  src={app.icon}
-                  className="w-12 h-12 cursor-pointer hover:scale-110 transition-transform rounded-full border-2 border-gray-300"
-                  alt={app.name}
-                />
-              </a>
-            ) : (
-              <AppIcon
-                name={app.name}
-                icon={app.icon}
-                onClick={() => openApp(app.name)}
-                className="w-12 h-12 cursor-pointer hover:scale-110 transition-transform rounded-full border-2 border-gray-300"
-              />
-            )}
-
-            {/* 🔹 Label Above Icon (only visible on hover) */}
-            <span className="absolute -top-8 bg-gray-900 text-white text-xs px-2 py-1 rounded-md opacity-0 group-hover:opacity-100 transition-opacity">
-              {app.name}
-            </span>
-          </motion.div>
-        </Tooltip.Trigger>
-
-        <Tooltip.Portal>
-          <Tooltip.Content
-            sideOffset={8}
-            className="bg-gray-700 px-2 py-1.5 text-sm rounded text-white border border-gray-600 shadow"
-          >
-            {app.name}
-            <Tooltip.Arrow />
-          </Tooltip.Content>
-        </Tooltip.Portal>
-      </Tooltip.Root>
-    </Tooltip.Provider>
-  );
-}
-
-File: ./src/shared/components/AppIcon/AppIcon.tsx
-
-import { motion } from "framer-motion";
-
-interface AppIconProps {
-  name: string;
-  icon: string;
-  onClick?: () => void;
-  link?: string;
-}
-
-export default function AppIcon({ name, icon, onClick, link }: AppIconProps) {
-  return link ? (
-    <a href={link} target="_blank" rel="noopener noreferrer">
-      <motion.img
-        src={icon}
-        className="w-12 h-12 cursor-pointer hover:scale-110 transition-transform"
-        alt={name}
-      />
-    </a>
-  ) : (
-    <motion.img
-      src={icon}
-      className="w-12 h-12 cursor-pointer hover:scale-110 transition-transform"
-      onClick={onClick}
-      alt={name}
-    />
-  );
-}
-
-File: ./src/vite-env.d.ts
-
-/// <reference types="vite/client" />
-
-File: ./src/hooks/useAppStore.ts
-
-import { create } from "zustand";
-
-interface AppState {
-  openApps: { appName: string; filePath?: string }[];
-  openApp: (appName: string, options?: { filePath?: string }) => void;
-  closeApp: (appName: string) => void;
-}
-
-export const useAppStore = create<AppState>((set) => ({
-  openApps: [],
-  openApp: (appName, options) =>
-    set((state) => ({
-      openApps: [...state.openApps, { appNam  e, ...options }],
-    })),
-  closeApp: (appName) =>
-    set((state) => ({
-      openApps: state.openApps.filter((app) => app.appName !== appName),
-    })),
-}));
-
-
-Directory structure of src excluding node_modules:
-
-./src
-├── App.tsx
-├── assets
-│   └── react.svg
-├── features
-│   ├── Desktop
-│   │   ├── components
-│   │   │   └── Desktop.tsx
-│   │   ├── hooks
-│   │   └── styles
-│   ├── Dock
-│   │   ├── components
-│   │   │   └── Dock.tsx
-│   │   ├── hooks
-│   │   └── styles
-│   ├── Finder
-│   │   ├── components
-│   │   │   └── Finder.tsx
-│   │   ├── hooks
-│   │   └── styles
-│   ├── PDFViewer
-│   │   ├── components
-│   │   │   └── PDFViewer.tsx
-│   │   ├── hooks
-│   │   └── styles
-│   ├── Terminal
-│   │   ├── components
-│   │   │   └── Terminal.tsx
-│   │   ├── hooks
-│   │   └── styles
-│   ├── Topbar
-│   │   ├── components
-│   │   │   └── Topbar.tsx
-│   │   ├── hooks
-│   │   └── styles
-│   └── Window
-│       ├── components
-│       │   └── Window.tsx
-│       ├── hooks
-│       └── styles
-├── hooks
-│   └── useAppStore.ts
-├── main.tsx
-├── shared
-│   └── components
-│       └── AppIcon
-│           └── AppIcon.tsx
-├── styles
-│   ├── global.css
-│   ├── index.css
-│   └── mac_background.css
-└── vite-env.d.ts
-
-36 directories, 16 files
-
-File: ./src/App.tsx
-
 import Desktop from "./features/Desktop/components/Desktop";
 
 export default function App() {
@@ -706,18 +59,11 @@ const PDFViewer: React.FC<PDFViewerProps> = ({ filePath, onClose }) => {
   return (
     <div className="w-full h-full">
       {/* Close Button */}
-      <div className="absolute top-2 left-2 flex gap-2 z-50">
-        <button
-          onClick={onClose}
-          className="bg-gray-800 text-white p-2 rounded-full hover:bg-gray-700"
-        >
-          ⨉
-        </button>
-      </div>
+      <div className="absolute top-2 left-2 flex gap-2 z-50"></div>
 
       {/* PDF Viewer */}
       <iframe
-        src={correctedPath}
+        src={`${correctedPath}#zoom=125`}
         className="w-full h-full border-none"
         title="PDF Viewer"
       />
@@ -798,7 +144,6 @@ import Terminal from "@features/Terminal/components/Terminal";
 import Window from "@features/Window/components/Window";
 import PDFViewer from "@features/PDFViewer/components/PDFViewer";
 import { useRef, useEffect } from "react";
-import Draggable from "react-draggable";
 import { motion } from "framer-motion";
 
 export default function Desktop() {
@@ -823,38 +168,24 @@ export default function Desktop() {
       <Topbar />
 
       <div className="flex-1 relative z-10 p-4">
-        {openApps.map(({ appName, filePath }, index) => {
-          if (!dragRefs.current[appName]) {
-            dragRefs.current[appName] = { current: null };
-          }
-
-          return (
-            <Draggable
-              key={appName}
-              nodeRef={dragRefs.current[appName]}
-              bounds="parent"
-            >
-              <motion.div
-                ref={dragRefs.current[appName]}
-                initial={{ opacity: 0, scale: 0.9 }}
-                animate={{ opacity: 1, scale: 1 }}
-                className="absolute bg-gray-700 rounded-lg shadow-lg flex flex-col backdrop-blur-xl border border-gray-600"
-                style={{ zIndex: 20 + index }}
-              >
-                <Window appName={appName} closeApp={() => closeApp(appName)}>
-                  {appName === "Finder" && <Finder />}
-                  {appName === "Terminal" && <Terminal />}
-                  {appName === "PDFViewer" && (
-                    <PDFViewer
-                      filePath={filePath}
-                      onClose={() => closeApp(appName)}
-                    />
-                  )}
-                </Window>
-              </motion.div>
-            </Draggable>
-          );
-        })}
+        {openApps.map(({ appName, filePath }, index) => (
+          <div
+            key={appName}
+            // Use absolute positioning with a z-index based on the index
+            style={{ position: "absolute", zIndex: 20 + index }}
+          >
+            <Window appName={appName} closeApp={() => closeApp(appName)}>
+              {appName === "Finder" && <Finder />}
+              {appName === "Terminal" && <Terminal />}
+              {appName === "PDFViewer" && (
+                <PDFViewer
+                  filePath={filePath}
+                  onClose={() => closeApp(appName)}
+                />
+              )}
+            </Window>
+          </div>
+        ))}
       </div>
 
       <Dock openApp={openApp} />
@@ -864,102 +195,95 @@ export default function Desktop() {
 
 File: ./src/features/Window/components/Window.tsx
 
-import { motion } from "framer-motion";
-import Draggable from "react-draggable";
-import { useRef, useEffect, useState } from "react";
+import React, { useState, useEffect } from "react";
+import { Rnd } from "react-rnd";
+import "../styles/Window.css";
 
 interface WindowProps {
-  appName: string;
-  closeApp: () => void;
+  title: string;
+  isVisible: boolean;
+  onMinimize: () => void;
+  onClose: () => void;
+  isMaximizedAlready?: boolean;
   children: React.ReactNode;
 }
 
-export default function Window({ appName, closeApp, children }: WindowProps) {
-  const nodeRef = useRef<HTMLDivElement | null>(null);
-  const [defaultPosition, setDefaultPosition] = useState({ x: 0, y: 0 });
-  const [size, setSize] = useState({ width: 500, height: 400 }); // Default size
-  const [isResizing, setIsResizing] = useState(false);
+const Window: React.FC<WindowProps> = ({
+  title, 
+  isVisible,
+  onMinimize,
+  onClose,
+  isMaximizedAlready = false,
+  children,
+}) => {
+  // Initial size: 600x400 and initial position: centered based on window dimensions.
+  const [size, setSize] = useState({ width: 600, height: 400 });
+  const [position, setPosition] = useState({
+    x: window.innerWidth / 2 - 300,
+    y: window.innerHeight / 2 - 200,
+  });
+  const [isMaximized, setIsMaximized] = useState(isMaximizedAlready);
 
-  // Calculate the center position dynamically
   useEffect(() => {
-    const screenWidth = window.innerWidth;
-    const screenHeight = window.innerHeight;
-    setDefaultPosition({
-      x: screenWidth / 2 - 250, // Center horizontally
-      y: screenHeight / 2 - 200, // Center vertically
-    });
-  }, []);
-
-  // Handle window resizing
-  const handleResize = (e: React.MouseEvent) => {
-    e.preventDefault();
-    const startX = e.clientX;
-    const startY = e.clientY;
-    const startWidth = size.width;
-    const startHeight = size.height;
-
-    const onMouseMove = (e: MouseEvent) => {
-      const newWidth = startWidth + (e.clientX - startX);
-      const newHeight = startHeight + (e.clientY - startY);
-      setSize({
-        width: Math.max(newWidth, 300), // Minimum width
-        height: Math.max(newHeight, 200), // Minimum height
+    if (isMaximized) {
+      // When maximized, adjust size and position accordingly.
+      setSize({ width: 1280, height: 800 });
+      setPosition({
+        x: window.innerWidth / 2 - 640,
+        y: window.innerHeight / 2 - 400,
       });
-    };
+    } else {
+      // Restore to the default size and position.
+      setSize({ width: 600, height: 400 });
+      setPosition({
+        x: window.innerWidth / 2 - 300,
+        y: window.innerHeight / 2 - 200,
+      });
+    }
+  }, [isMaximized]);
 
-    const onMouseUp = () => {
-      window.removeEventListener("mousemove", onMouseMove);
-      window.removeEventListener("mouseup", onMouseUp);
-      setIsResizing(false);
-    };
-
-    window.addEventListener("mousemove", onMouseMove);
-    window.addEventListener("mouseup", onMouseUp);
+  const handleMinimize = () => onMinimize();
+  const handleMaximize = () => {
+    setIsMaximized(!isMaximized);
   };
+  const handleClose = () => onClose();
+
+  if (!isVisible) return null;
 
   return (
-    <Draggable
-      nodeRef={nodeRef}
-      handle=".drag-handle"
-      bounds="parent"
-      defaultPosition={defaultPosition}
-    >
-      <motion.div
-        ref={nodeRef}
-        initial={{ opacity: 0, scale: 0.8 }}
-        animate={{ opacity: 1, scale: 1 }}
-        className="absolute bg-gray-700 rounded-lg flex flex-col backdrop-blur-md border border-gray-600"
-        style={{
-          width: size.width,
-          height: size.height,
-          boxShadow: "0px 10px 30px rgba(0, 0, 0, 0.3)", // 🔥 Soft drop shadow
+    <div className="window-container">
+      <Rnd
+        // Use the controlled size and position.
+        size={size}
+        position={position}
+        onDragStop={(e, d) => setPosition({ x: d.x, y: d.y })}
+        onResizeStop={(e, direction, ref, delta, newPosition) => {
+          setSize({ width: ref.offsetWidth, height: ref.offsetHeight });
+          setPosition(newPosition);
         }}
+        minWidth={300}
+        minHeight={200}
+        // **Key change:** Set bounds to "window" so that the coordinate space matches window.innerWidth/innerHeight.
+        bounds="window"
+        dragHandleClassName="drag-handle"
+        className="window-rnd"
+        style={{ boxShadow: "0px 10px 30px rgba(0, 0, 0, 0.3)" }}
       >
-        {/* Window header with drag handle */}
-        <div className="bg-gray-600 p-2 flex justify-between text-white drag-handle">
-          <span>{appName}</span>
-          <button onClick={closeApp} className="text-red-500">
-            ⨉
-          </button>
+        <div className="window-top-bar drag-handle">
+          <span>{title}</span>
+          <div className="window-controls">
+            <button onClick={handleMinimize}>_</button>
+            <button onClick={handleMaximize}>{isMaximized ? "❐" : "[]"}</button>
+            <button onClick={handleClose}>X</button>
+          </div>
         </div>
-
-        {/* Window content */}
-        <div className="flex-1 flex items-center justify-center text-white overflow-hidden">
-          {children}
-        </div>
-
-        {/* Resize handle */}
-        <div
-          className="absolute bottom-0 right-0 w-4 h-4 cursor-se-resize bg-gray-600"
-          onMouseDown={(e) => {
-            setIsResizing(true);
-            handleResize(e);
-          }}
-        />
-      </motion.div>
-    </Draggable>
+        <div className="window-content">{children}</div>
+      </Rnd>
+    </div>
   );
-}
+};
+
+export default Window;
 
 File: ./src/features/Finder/components/Finder.tsx
 
@@ -1141,24 +465,26 @@ function DockItem({ app, openApp, mouseLeft }: DockItemProps) {
               if (!app.link) openApp(app.name);
             }}
           >
-            {app.link ? (
-              <a href={app.link} target="_blank" rel="noopener noreferrer">
-                <motion.img
-                  src={app.icon}
-                  className="w-12 h-12 cursor-pointer hover:scale-110 transition-transform rounded-full border-2 border-gray-300"
-                  alt={app.name}
+            <div className="w-14 h-14 flex items-center justify-center rounded-full bg-gray-800 shadow-md border border-gray-300 overflow-hidden">
+              {app.link ? (
+                <a href={app.link} target="_blank" rel="noopener noreferrer">
+                  <motion.img
+                    src={app.icon}
+                    className="w-12 h-12 object-cover rounded-full"
+                    alt={app.name}
+                  />
+                </a>
+              ) : (
+                // Notice we do not pass an onClick here to avoid duplication.
+                <AppIcon
+                  name={app.name}
+                  icon={app.icon}
+                  className="w-12 h-12 object-cover rounded-full"
                 />
-              </a>
-            ) : (
-              <AppIcon
-                name={app.name}
-                icon={app.icon}
-                onClick={() => openApp(app.name)}
-                className="w-12 h-12 cursor-pointer hover:scale-110 transition-transform rounded-full border-2 border-gray-300"
-              />
-            )}
+              )}
+            </div>
 
-            {/* 🔹 Label Above Icon (only visible on hover) */}
+            {/* Label Above Icon (only visible on hover) */}
             <span className="absolute -top-8 bg-gray-900 text-white text-xs px-2 py-1 rounded-md opacity-0 group-hover:opacity-100 transition-opacity">
               {app.name}
             </span>
@@ -1191,23 +517,10 @@ interface AppIconProps {
 }
 
 export default function AppIcon({ name, icon, onClick, link }: AppIconProps) {
-  return link ? (
-    <a href={link} target="_blank" rel="noopener noreferrer">
-      <div className="w-14 h-14 flex items-center justify-center rounded-full border-2 border-gray-300 bg-gray-800 shadow-md">
-        <motion.img
-          src={icon} // ✅ Use `icon`, not `app.icon`
-          className="w-12 h-12 rounded-full"
-          alt={name} // ✅ Use `name`, not `app.name`
-        />
-      </div>
-    </a>
-  ) : (
-    <motion.img
-      src={icon}
-      className="w-12 h-12 cursor-pointer hover:scale-110 transition-transform"
-      onClick={onClick}
-      alt={name}
-    />
+  return (
+    <div className="icon-wrapper" onClick={onClick}>
+      <motion.img src={icon} className="icon-image" alt={name} />
+    </div>
   );
 }
 
@@ -1237,12 +550,16 @@ interface AppState {
   closeApp: (appName: string) => void;
 }
 
-export const useAppStore = create<AppState>((set) => ({
+export const useAppStore = create<AppState>((set, get) => ({
   openApps: [],
   openApp: (appName, options) =>
-    set((state) => ({
-      openApps: [...state.openApps, { appName, ...options }],
-    })),
+    set((state) => {
+      // If already open, do not add again.
+      if (state.openApps.find((app) => app.appName === appName)) {
+        return state;
+      }
+      return { openApps: [...state.openApps, { appName, ...options }] };
+    }),
   closeApp: (appName) =>
     set((state) => ({
       openApps: state.openApps.filter((app) => app.appName !== appName),
@@ -1292,6 +609,7 @@ Directory structure of src excluding node_modules:
 │       │   └── Window.tsx
 │       ├── hooks
 │       └── styles
+│           └── Window.css
 ├── hooks
 │   └── useAppStore.ts
 ├── main.tsx
@@ -1305,4 +623,4 @@ Directory structure of src excluding node_modules:
 │   └── index.css
 └── vite-env.d.ts
 
-36 directories, 16 files
+36 directories, 17 files

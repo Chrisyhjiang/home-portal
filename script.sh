@@ -2,7 +2,8 @@
 
 # Define the output file
 output_file="output.txt"
-
+# Remove all content in the output file if it exists
+> "$output_file"
 # Find all .ts and .tsx files in the src directory, excluding the node_modules directory and .sh files, and concatenate them into the output file
 find ./src -type d -name "node_modules" -prune -o -type f \( -name "*.ts" -o -name "*.tsx" \) ! -name "*.sh" -print0 | while IFS= read -r -d '' file; do
     echo -e "\nFile: $file\n" >> "$output_file"

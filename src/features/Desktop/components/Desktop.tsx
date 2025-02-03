@@ -6,7 +6,6 @@ import Terminal from "@features/Terminal/components/Terminal";
 import Window from "@features/Window/components/Window";
 import PDFViewer from "@features/PDFViewer/components/PDFViewer";
 import { useRef, useEffect } from "react";
-import Draggable from "react-draggable";
 import { motion } from "framer-motion";
 
 export default function Desktop() {
@@ -31,38 +30,31 @@ export default function Desktop() {
       <Topbar />
 
       <div className="flex-1 relative z-10 p-4">
-        {openApps.map(({ appName, filePath }, index) => {
-          if (!dragRefs.current[appName]) {
-            dragRefs.current[appName] = { current: null };
-          }
-
-          return (
-            <Draggable
-              key={appName}
-              nodeRef={dragRefs.current[appName]}
-              bounds="parent"
+        {openApps.map(({ appName, filePath }, index) => (
+          <div
+            key={appName}
+            // Use absolute positioning with a z-index based on the index
+            style={{ position: "absolute", zIndex: 20 + index }}
+          >
+            <Window
+              title={appName}
+              isVisible={true}
+              closeApp={() => closeApp(appName)}
+              onMinimize={() => {
+                /* add minimize logic if needed */
+              }}
             >
-              <motion.div
-                ref={dragRefs.current[appName]}
-                initial={{ opacity: 0, scale: 0.9 }}
-                animate={{ opacity: 1, scale: 1 }}
-                className="absolute bg-gray-700 rounded-lg shadow-lg flex flex-col backdrop-blur-xl border border-gray-600"
-                style={{ zIndex: 20 + index }}
-              >
-                <Window appName={appName} closeApp={() => closeApp(appName)}>
-                  {appName === "Finder" && <Finder />}
-                  {appName === "Terminal" && <Terminal />}
-                  {appName === "PDFViewer" && (
-                    <PDFViewer
-                      filePath={filePath}
-                      onClose={() => closeApp(appName)}
-                    />
-                  )}
-                </Window>
-              </motion.div>
-            </Draggable>
-          );
-        })}
+              {appName === "Finder" && <Finder />}
+              {appName === "Terminal" && <Terminal />}
+              {appName === "PDFViewer" && (
+                <PDFViewer
+                  filePath={filePath}
+                  onClose={() => closeApp(appName)}
+                />
+              )}
+            </Window>
+          </div>
+        ))}
       </div>
 
       <Dock openApp={openApp} />
