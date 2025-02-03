@@ -8,12 +8,9 @@ import {
   animate,
   MotionValue,
 } from "framer-motion";
+import { useAppStore } from "@hooks/useAppStore";
 import AppIcon from "@shared/components/AppIcon/AppIcon";
 import { apps } from "@shared/constants";
-
-interface DockProps {
-  openApp: (app: string) => void;
-}
 
 const SCALE = 1.75;
 const DISTANCE = 70;
@@ -24,9 +21,9 @@ const SPRING = {
   damping: 12,
 };
 
-export default function Dock({ openApp }: DockProps) {
+export default function Dock() {
   const mouseLeft = useMotionValue(-Infinity);
-  const mouseRight = useMotionValue(-Infinity);
+  const { openApps, openApp, restoreApp } = useAppStore();
 
   return (
     <motion.div
@@ -34,28 +31,43 @@ export default function Dock({ openApp }: DockProps) {
       onMouseMove={(e) => {
         const { left, right } = e.currentTarget.getBoundingClientRect();
         mouseLeft.set(e.clientX - left);
-        mouseRight.set(right - e.clientX);
       }}
-      onMouseLeave={() => {
-        mouseLeft.set(-Infinity);
-        mouseRight.set(-Infinity);
-      }}
+      onMouseLeave={() => mouseLeft.set(-Infinity)}
     >
-      {apps.map((app) => (
-        <DockItem
-          key={app.name}
-          app={app}
-          openApp={openApp}
-          mouseLeft={mouseLeft}
-        />
-      ))}
+      {/* Regular Apps */}
+      {apps.map((app) => {
+        const isRunning = openApps.some((a) => a.appName === app.name);
+        const isMinimized = openApps.some(
+          (a) => a.appName === app.name && a.minimized
+        );
+
+        return (
+          <DockItem
+            key={app.name}
+            app={app}
+            openApp={() => {
+              if (isMinimized) {
+                restoreApp(app.name);
+                animate(
+                  ".window-rnd",
+                  { scale: 1, opacity: 1 },
+                  { duration: 0.2 }
+                );
+              } else if (!isRunning) {
+                openApp(app.name);
+              }
+            }}
+            mouseLeft={mouseLeft}
+          />
+        );
+      })}
     </motion.div>
   );
 }
 
 interface DockItemProps {
   app: { name: string; icon: string; link?: string };
-  openApp: (app: string) => void;
+  openApp: () => void;
   mouseLeft: MotionValue<number>;
 }
 
@@ -95,26 +107,15 @@ function DockItem({ app, openApp, mouseLeft }: DockItemProps) {
                 duration: 0.7,
                 ease: "easeInOut",
               });
-              if (!app.link) openApp(app.name);
+              openApp();
             }}
           >
             <div className="w-14 h-14 flex items-center justify-center rounded-full bg-gray-800 shadow-md border border-gray-300 overflow-hidden">
-              {app.link ? (
-                <a href={app.link} target="_blank" rel="noopener noreferrer">
-                  <motion.img
-                    src={app.icon}
-                    className="w-12 h-12 object-cover rounded-full"
-                    alt={app.name}
-                  />
-                </a>
-              ) : (
-                // Notice we do not pass an onClick here to avoid duplication.
-                <AppIcon
-                  name={app.name}
-                  icon={app.icon}
-                  className="w-12 h-12 object-cover rounded-full"
-                />
-              )}
+              <motion.img
+                src={app.icon}
+                className="w-12 h-12 object-cover rounded-full"
+                alt={app.name}
+              />
             </div>
 
             {/* Label Above Icon (only visible on hover) */}
