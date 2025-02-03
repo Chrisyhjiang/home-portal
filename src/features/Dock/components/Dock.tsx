@@ -22,12 +22,40 @@ const SPRING = {
 };
 
 interface Props {
-  openApp: (appName: string) => void;
+  openApp: (appName: string, startPosition?: { x: number; y: number }) => void;
 }
 
 export default function Dock({ openApp }: Props) {
   const mouseLeft = useMotionValue(-Infinity);
-  const { openApps } = useAppStore();
+  const { openApps, minimizeApp, restoreApp } = useAppStore();
+
+  const handleDockIconClick = (appName: string) => {
+    const app = openApps.find(a => a.appName === appName);
+    const iconImg = document.querySelector(`img[alt="${appName}"]`);
+    const dockIcon = iconImg?.closest('.group');
+    
+    if (!dockIcon) {
+      console.error('Could not find dock icon for:', appName);
+      return;
+    }
+
+    const dockIconRect = dockIcon.getBoundingClientRect();
+    const startPosition = {
+      x: dockIconRect.left,
+      y: dockIconRect.top
+    };
+
+    if (app) {
+      if (app.minimized) {
+        // If app is minimized, restore it
+        restoreApp(appName);
+      }
+      // If app is already open and not minimized, do nothing
+    } else {
+      // If app isn't open at all, open it with starting position
+      openApp(appName, { startPosition });
+    }
+  };
 
   return (
     <motion.div
@@ -48,7 +76,7 @@ export default function Dock({ openApp }: Props) {
           <DockItem
             key={app.name}
             app={app}
-            openApp={() => openApp(app.name)}
+            openApp={() => handleDockIconClick(app.name)}
             mouseLeft={mouseLeft}
           />
         );

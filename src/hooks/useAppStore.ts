@@ -10,47 +10,61 @@ interface AppState {
     appName: string;
     minimized: boolean;
     lastPosition?: WindowPosition;
+    startPosition?: { x: number; y: number };
     filePath?: string;
   }[];
-  openApp: (appName: string, options?: { iconPreview?: string }) => void;
+  openApp: (appName: string, options?: { filePath?: string; startPosition?: { x: number; y: number } }) => void;
   minimizeApp: (appName: string) => void;
   restoreApp: (appName: string) => void;
   closeApp: (appName: string) => void;
   setWindowPosition: (appName: string, position: WindowPosition) => void;
+  completeRestore: (appName: string) => void;
 }
 
 export const useAppStore = create<AppState>((set, get) => ({
   openApps: [],
 
-  openApp: (appName, options) =>
-    set((state) => {
-      const existingApp = state.openApps.find((app) => app.appName === appName);
-      if (existingApp) {
-        return {
-          openApps: state.openApps.map((app) =>
-            app.appName === appName ? { ...app, minimized: false } : app
-          ),
-        };
-      }
-      return {
-        openApps: [
-          ...state.openApps,
-          { appName, minimized: false, ...options },
-        ],
-      };
-    }),
+  openApp: (appName: string, options?: { filePath?: string; startPosition?: { x: number; y: number } }) => {
+    console.log(`[${appName}] Opening app with options:`, options);
+    set((state) => ({
+      openApps: [
+        ...state.openApps,
+        { 
+          appName, 
+          minimized: false,
+          startPosition: options?.startPosition,
+          ...options 
+        }
+      ],
+    }));
+  },
 
-  minimizeApp: (appName) =>
+  minimizeApp: (appName: string) =>
     set((state) => ({
       openApps: state.openApps.map((app) =>
-        app.appName === appName ? { ...app, minimized: true } : app
+        app.appName === appName
+          ? { ...app, minimized: true }
+          : app
       ),
     })),
 
-  restoreApp: (appName) =>
+  restoreApp: (appName: string) => {
+    console.log(`[${appName}] Restoring app`);
     set((state) => ({
       openApps: state.openApps.map((app) =>
-        app.appName === appName ? { ...app, minimized: false } : app
+        app.appName === appName
+          ? { ...app, minimized: false }
+          : app
+      ),
+    }));
+  },
+
+  completeRestore: (appName: string) =>
+    set((state) => ({
+      openApps: state.openApps.map((app) =>
+        app.appName === appName
+          ? { ...app, minimized: false }
+          : app
       ),
     })),
 
