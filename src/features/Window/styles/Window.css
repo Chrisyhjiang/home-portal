@@ -8,6 +8,8 @@
   overflow: hidden;
   display: flex;
   flex-direction: column;
+  transform-origin: top left !important;
+  will-change: transform;
 }
 
 .window-container {
