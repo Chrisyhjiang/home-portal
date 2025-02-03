@@ -43,6 +43,12 @@ const Window: React.FC<WindowProps> = ({
   const { minimizeApp, openApps, setWindowPosition } = useAppStore();
   const [isMinimizing, setIsMinimizing] = useState(false);
 
+  // Add state to track if we're restoring from minimized
+  const [isRestoring, setIsRestoring] = useState(false);
+
+  // Track if we should animate from dock
+  const [shouldAnimateFromDock, setShouldAnimateFromDock] = useState(false);
+
   const appData = openApps.find((app) => app.appName === title);
 
   // Add a sanitized class name for the window
@@ -59,72 +65,198 @@ const Window: React.FC<WindowProps> = ({
     }
   }, [isMaximized]);
 
+  useEffect(() => {
+    // When window becomes visible and was previously minimized
+    const app = openApps.find(a => a.appName === title);
+    if (isVisible && app?.lastPosition) {
+      if (app.minimized) {
+        // Set flag to animate from dock
+        setShouldAnimateFromDock(true);
+      } else {
+        // Normal position restore
+        setPosition(app.lastPosition.position);
+        setSize(app.lastPosition.size);
+      }
+    }
+  }, [isVisible, openApps]);
+
+  // Handle the actual restore animation when needed
+  useEffect(() => {
+    if (shouldAnimateFromDock) {
+      handleRestore();
+      setShouldAnimateFromDock(false);
+    }
+  }, [shouldAnimateFromDock]);
+
   const handleMinimize = async () => {
     setIsMinimizing(true);
     
     const rndElement = document.querySelector(`.${windowClassName}`) as HTMLElement;
-    if (!rndElement) return;
+    if (!rndElement) {
+      console.error('Could not find window element with class:', windowClassName);
+      return;
+    }
 
-    const transform = window.getComputedStyle(rndElement).transform;
-    const matrix = new DOMMatrix(transform);
+    const iconImg = document.querySelector(`img[alt="${title}"]`);
+    const dockIcon = iconImg?.closest('.group');
     
-    const currentPosition = {
-      x: position.x + matrix.m41,
-      y: position.y + matrix.m42
-    };
+    if (!dockIcon) {
+      console.error('Could not find dock icon for:', title);
+      const allIcons = document.querySelectorAll('img');
+      console.log('Available icons:', Array.from(allIcons).map(img => img.alt));
+      return;
+    }
 
-    const dockIcon = document.querySelector(`[data-app="${title}"]`);
-    const dockIconRect = dockIcon?.getBoundingClientRect();
+    const dockIconRect = dockIcon.getBoundingClientRect();
     
     if (dockIconRect) {
       setWindowPosition(title, { 
-        position: currentPosition,
+        position: { x: position.x, y: position.y },
         size 
       });
 
-      // Calculate the animation target relative to the current window position
-      const targetX = dockIconRect.x - currentPosition.x;
-      const targetY = dockIconRect.y - currentPosition.y;
+      const targetX = dockIconRect.left - rndElement.offsetLeft;
+      const targetY = dockIconRect.top - rndElement.offsetTop;
       
-      await animate(
-        `.${windowClassName}`,
-        {
-          scale: [1, 0.9, 0.5, 0.2],
-          opacity: [1, 1, 0.8, 0],
-          x: [
-            0,
-            targetX * 0.1, 
-            targetX * 0.3,
-            targetX
-          ],
-          y: [
-            0,
-            -100, // Move up more dramatically
-            targetY * 0.3,
-            targetY
-          ],
-          rotate: [0, -8, -15, -5], // More pronounced rotation
-        },
-        {
-          duration: 0.5, // Slightly longer duration
-          ease: [0.4, 0, 0.2, 1], // Custom easing for more bounce
-        }
-      );
+      try {
+        await animate(
+          rndElement,
+          {
+            scale: [
+              1,        // Start normal size
+              0.8,      // Slight shrink
+              0.6,      // Continue shrinking
+              0.4,      // Getting smaller
+              0.2,      // Almost there
+              0.1       // Final tiny size
+            ],
+            x: [
+              0,                  // Start position
+              targetX * 0.1,      // Start moving slightly
+              targetX * 0.3,      // Pick up speed
+              targetX * 0.5,      // Halfway there
+              targetX * 0.8,      // Almost there
+              targetX             // Final position
+            ],
+            y: [
+              0,                  // Start position
+              -80,               // Move up first
+              -40,               // Start coming down
+              targetY * 0.3,      // Continue arc
+              targetY * 0.7,      // Almost there
+              targetY             // Final position
+            ]
+          },
+          {
+            duration: 0.5,        // Slightly longer duration
+            ease: [0.32, 0, 0.67, 0], // Custom easing for smooth motion
+            times: [0, 0.2, 0.4, 0.6, 0.8, 1] // Control timing of keyframes
+          }
+        );
+      } catch (error) {
+        console.error('Animation failed:', error);
+      }
+
+      await new Promise(resolve => setTimeout(resolve, 50));
     }
     
     onMinimize();
     setIsMinimizing(false);
   };
 
-  // Restore position when window becomes visible
-  useEffect(() => {
-    const app = openApps.find(a => a.appName === title);
-    if (app?.lastPosition && !isMinimizing) {
-      // Just restore the exact position we stored
-      setPosition(app.lastPosition.position);
-      setSize(app.lastPosition.size);
+  const handleRestore = async () => {
+    setIsRestoring(true);
+
+    const iconImg = document.querySelector(`img[alt="${title}"]`);
+    const dockIcon = iconImg?.closest('.group');
+    
+    if (!dockIcon) {
+      console.error('Could not find dock icon for:', title);
+      return;
     }
-  }, [openApps, title, isMinimizing]);
+
+    const dockIconRect = dockIcon.getBoundingClientRect();
+    const app = openApps.find(a => a.appName === title);
+    
+    if (dockIconRect && app?.lastPosition) {
+      const targetX = app.lastPosition.position.x;
+      const targetY = app.lastPosition.position.y;
+      
+      const startX = dockIconRect.left;
+      const startY = dockIconRect.top;
+
+      // Set initial position to dock icon position
+      setPosition({ x: startX, y: startY });
+      setSize({ width: 50, height: 50 }); // Start with icon size
+
+      // Small delay to ensure position is set
+      await new Promise(resolve => setTimeout(resolve, 50));
+
+      const rndElement = document.querySelector(`.${windowClassName}`) as HTMLElement;
+      if (!rndElement) return;
+      
+      try {
+        await animate(
+          rndElement,
+          {
+            scale: [
+              0.1,      // Start tiny (dock icon size)
+              0.2,      // Start growing
+              0.4,      // Getting bigger
+              0.6,      // Continue growing
+              0.8,      // Almost there
+              1        // Final size
+            ],
+            width: [
+              50,      // Start with icon width
+              app.lastPosition.size.width * 0.2,
+              app.lastPosition.size.width * 0.4,
+              app.lastPosition.size.width * 0.6,
+              app.lastPosition.size.width * 0.8,
+              app.lastPosition.size.width
+            ],
+            height: [
+              50,      // Start with icon height
+              app.lastPosition.size.height * 0.2,
+              app.lastPosition.size.height * 0.4,
+              app.lastPosition.size.height * 0.6,
+              app.lastPosition.size.height * 0.8,
+              app.lastPosition.size.height
+            ],
+            x: [
+              0,
+              (targetX - startX) * 0.2,
+              (targetX - startX) * 0.4,
+              (targetX - startX) * 0.6,
+              (targetX - startX) * 0.8,
+              targetX - startX
+            ],
+            y: [
+              0,
+              -20,    // Small up movement
+              (targetY - startY) * 0.3,
+              (targetY - startY) * 0.5,
+              (targetY - startY) * 0.7,
+              targetY - startY
+            ]
+          },
+          {
+            duration: 0.4,
+            ease: [0.2, 0.9, 0.1, 1],
+            times: [0, 0.2, 0.4, 0.6, 0.8, 1]
+          }
+        );
+
+        // Set final size and position
+        setSize(app.lastPosition.size);
+        setPosition(app.lastPosition.position);
+      } catch (error) {
+        console.error('Restore animation failed:', error);
+      }
+    }
+    
+    setIsRestoring(false);
+  };
 
   if (!isVisible || appData?.minimized) return null;
 
@@ -132,7 +264,7 @@ const Window: React.FC<WindowProps> = ({
     <AnimatePresence>
       {isVisible && !appData?.minimized && (
         <motion.div
-          initial={{ scale: 0.3, opacity: 0 }}
+          initial={!shouldAnimateFromDock && !isRestoring}
           animate={{ 
             scale: isMinimizing ? 1 : 1, 
             opacity: isMinimizing ? 1 : 1 
