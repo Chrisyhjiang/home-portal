@@ -35,10 +35,8 @@ const Window: React.FC<WindowProps> = ({
     if (title === "PDFViewer") {
       return { x: 20, y: 20 };
     }
-    return {
-      x: window.innerWidth / 2 - 300,
-      y: window.innerHeight / 2 - 200,
-    };
+    // Change default position to top-left with a small offset
+    return { x: 20, y: 20 };
   });
 
   const [isMaximized, setIsMaximized] = useState(isMaximizedAlready);
@@ -47,24 +45,25 @@ const Window: React.FC<WindowProps> = ({
 
   const appData = openApps.find((app) => app.appName === title);
 
+  // Add a sanitized class name for the window
+  const windowClassName = `window-rnd-${title.toLowerCase().replace(/\s+/g, '-')}`;
+
   useEffect(() => {
     if (isMaximized) {
       setSize({ width: window.innerWidth, height: window.innerHeight });
       setPosition({ x: 0, y: 0 });
     } else {
       setSize({ width: 600, height: 400 });
-      setPosition({
-        x: window.innerWidth / 2 - 300,
-        y: window.innerHeight / 2 - 200,
-      });
+      // Update this to also use top-left positioning when un-maximizing
+      setPosition({ x: 20, y: 20 });
     }
   }, [isMaximized]);
 
   const handleMinimize = async () => {
     setIsMinimizing(true);
     
-    // Get the Rnd component's current position directly
-    const rndElement = document.querySelector(".window-rnd") as HTMLElement;
+    // Use the unique window class name
+    const rndElement = document.querySelector(`.${windowClassName}`) as HTMLElement;
     if (!rndElement) return;
 
     // Get the transform matrix to account for any transforms
@@ -91,8 +90,9 @@ const Window: React.FC<WindowProps> = ({
       const targetX = dockIconRect.x - currentPosition.x;
       const targetY = dockIconRect.y - currentPosition.y;
 
+      // Use the unique window class name for animation
       await animate(
-        ".window-rnd",
+        `.${windowClassName}`,
         {
           scale: 0.1,
           opacity: 0,
@@ -135,7 +135,7 @@ const Window: React.FC<WindowProps> = ({
             size={size}
             position={position}
             bounds="window"
-            className="window-rnd"
+            className={`window-rnd ${windowClassName}`}
             dragHandleClassName="drag-handle"
             onDragStop={(e, d) => setPosition({ x: d.x, y: d.y })}
             onResizeStop={(e, direction, ref, delta, newPosition) => {

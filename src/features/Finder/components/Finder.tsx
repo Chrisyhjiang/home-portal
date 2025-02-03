@@ -5,7 +5,7 @@ export default function Finder() {
   const { openApp } = useAppStore(); // ✅ Use store to open PDFViewer
 
   const files = [
-    { name: "Resume.pdf", path: "/docs/Resume.pdf" }, // ✅ Ensure exact casing
+    { name: "resume.pdf", path: "/docs/resume.pdf" }, // ✅ Ensure exact casing
     { name: "Project 1", path: "https://github.com/Chrisyhjiang/project1" },
     { name: "Project 2", path: "https://github.com/Chrisyhjiang/project2" },
   ];
