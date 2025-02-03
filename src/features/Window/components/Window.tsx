@@ -12,31 +12,27 @@ interface WindowProps {
 }
 
 const Window: React.FC<WindowProps> = ({
-  title, 
+  title,
   isVisible,
   onMinimize,
   onClose,
   isMaximizedAlready = false,
   children,
 }) => {
-  // Initial size: 600x400 and initial position: centered based on window dimensions.
+  // Initial size and position
   const [size, setSize] = useState({ width: 600, height: 400 });
   const [position, setPosition] = useState({
     x: window.innerWidth / 2 - 300,
     y: window.innerHeight / 2 - 200,
   });
   const [isMaximized, setIsMaximized] = useState(isMaximizedAlready);
+  const [minimized, setMinimized] = useState(false); // New state for minimizing
 
   useEffect(() => {
     if (isMaximized) {
-      // When maximized, adjust size and position accordingly.
-      setSize({ width: 1280, height: 800 });
-      setPosition({
-        x: window.innerWidth / 2 - 640,
-        y: window.innerHeight / 2 - 400,
-      });
+      setSize({ width: window.innerWidth, height: window.innerHeight });
+      setPosition({ x: 0, y: 0 });
     } else {
-      // Restore to the default size and position.
       setSize({ width: 600, height: 400 });
       setPosition({
         x: window.innerWidth / 2 - 300,
@@ -45,44 +41,34 @@ const Window: React.FC<WindowProps> = ({
     }
   }, [isMaximized]);
 
-  const handleMinimize = () => onMinimize();
-  const handleMaximize = () => {
-    setIsMaximized(!isMaximized);
-  };
-  const handleClose = () => onClose();
-
-  if (!isVisible) return null;
+  if (!isVisible || minimized) return null; // Hides window when minimized
 
   return (
-    <div className="window-container">
-      <Rnd
-        // Use the controlled size and position.
-        size={size}
-        position={position}
-        onDragStop={(e, d) => setPosition({ x: d.x, y: d.y })}
-        onResizeStop={(e, direction, ref, delta, newPosition) => {
-          setSize({ width: ref.offsetWidth, height: ref.offsetHeight });
-          setPosition(newPosition);
-        }}
-        minWidth={300}
-        minHeight={200}
-        // **Key change:** Set bounds to "window" so that the coordinate space matches window.innerWidth/innerHeight.
-        bounds="window"
-        dragHandleClassName="drag-handle"
-        className="window-rnd"
-        style={{ boxShadow: "0px 10px 30px rgba(0, 0, 0, 0.3)" }}
-      >
-        <div className="window-top-bar drag-handle">
-          <span>{title}</span>
-          <div className="window-controls">
-            <button onClick={handleMinimize}>_</button>
-            <button onClick={handleMaximize}>{isMaximized ? "❐" : "[]"}</button>
-            <button onClick={handleClose}>X</button>
-          </div>
+    <Rnd
+      size={size}
+      position={position}
+      bounds="window"
+      className="window-rnd"
+      dragHandleClassName="drag-handle"
+      onDragStop={(e, d) => setPosition({ x: d.x, y: d.y })}
+      onResizeStop={(e, direction, ref, delta, newPosition) => {
+        setSize({ width: ref.offsetWidth, height: ref.offsetHeight });
+        setPosition(newPosition);
+      }}
+    >
+      <div className="window-top-bar drag-handle">
+        <div className="window-controls">
+          <button onClick={() => setMinimized(true)}>_</button> {/* Minimize */}
+          <button onClick={() => setIsMaximized(!isMaximized)}>
+            {isMaximized ? "❐" : "[]"}
+          </button>
+          <button onClick={onClose}>X</button> {/* Close */}
         </div>
-        <div className="window-content">{children}</div>
-      </Rnd>
-    </div>
+        <span className="window-title">{title}</span>
+      </div>
+
+      <div className="window-content">{children}</div>
+    </Rnd>
   );
 };
 

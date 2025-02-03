@@ -1,4 +1,5 @@
 import { useAppStore } from "@hooks/useAppStore";
+import "../styles/Finder.css"; // Ensure you have this file for styling
 
 export default function Finder() {
   const { openApp } = useAppStore(); // ✅ Use store to open PDFViewer
@@ -10,26 +11,24 @@ export default function Finder() {
   ];
 
   return (
-    <div className="p-4 bg-gray-800 text-white w-full h-full">
-      <h2 className="text-xl font-bold">Finder</h2>
-      <ul className="mt-4">
+    <div className="finder-container">
+      <h2 className="finder-title">Finder</h2>
+      <ul className="finder-list">
         {files.map((file) => (
-          <li key={file.name} className="mt-2">
+          <li key={file.name} className="finder-item">
             {file.path.startsWith("http") ? (
-              // ✅ External links open in new tab
               <a
                 href={file.path}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-blue-400 hover:underline"
+                className="finder-link"
               >
                 {file.name}
               </a>
             ) : (
-              // ✅ Open PDF inside the app
               <button
                 onClick={() => openApp("PDFViewer", { filePath: file.path })}
-                className="text-blue-400 hover:underline"
+                className="finder-button"
               >
                 {file.name}
               </button>
