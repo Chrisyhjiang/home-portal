@@ -16,12 +16,9 @@ const PDFViewer: React.FC<PDFViewerProps> = ({ filePath, onClose }) => {
 
   return (
     <div className="w-full h-full">
-      {/* Close Button */}
-      <div className="absolute top-2 left-2 flex gap-2 z-50"></div>
-
       {/* PDF Viewer */}
       <iframe
-        src={`${correctedPath}#zoom=125`}
+        src={`${correctedPath}#zoom=175&view=FitH&toolbar=0&navpanes=0&scrollbar=0&page=1`}
         className="w-full h-full border-none"
         title="PDF Viewer"
       />

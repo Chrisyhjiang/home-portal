@@ -6,10 +6,9 @@ import Terminal from "@features/Terminal/components/Terminal";
 import Window from "@features/Window/components/Window";
 import PDFViewer from "@features/PDFViewer/components/PDFViewer";
 import { useRef, useEffect } from "react";
-import { motion } from "framer-motion";
 
 export default function Desktop() {
-  const { openApps, openApp, closeApp } = useAppStore();
+  const { openApps, openApp, closeApp, minimizeApp, restoreApp } = useAppStore();
 
   console.log("openApps:", openApps); // ✅ Debugging
 
@@ -25,24 +24,29 @@ export default function Desktop() {
     });
   }, [openApps]);
 
+  const handleMinimize = (appName: string) => {
+    minimizeApp(appName);
+  };
+
   return (
     <div className="h-screen w-screen relative flex flex-col overflow-hidden pt-12 pb-20">
       <Topbar />
 
       <div className="flex-1 relative z-10 p-4">
-        {openApps.map(({ appName, filePath }, index) => (
+        {openApps.map(({ appName, filePath, minimized }, index) => (
           <div
             key={appName}
-            // Use absolute positioning with a z-index based on the index
-            style={{ position: "absolute", zIndex: 20 + index }}
+            style={{ 
+              position: "absolute", 
+              zIndex: 20 + index,
+              display: minimized ? 'none' : 'block'
+            }}
           >
             <Window
               title={appName}
               isVisible={true}
-              closeApp={() => closeApp(appName)}
-              onMinimize={() => {
-                /* add minimize logic if needed */
-              }}
+              onClose={() => closeApp(appName)}
+              onMinimize={() => handleMinimize(appName)}
             >
               {appName === "Finder" && <Finder />}
               {appName === "Terminal" && <Terminal />}
@@ -57,7 +61,18 @@ export default function Desktop() {
         ))}
       </div>
 
-      <Dock openApp={openApp} />
+      <Dock 
+        openApp={(appName: string) => {
+          const app = openApps.find(a => a.appName === appName);
+          if (app?.minimized) {
+            // Restore minimized app
+            restoreApp(appName);
+          } else if (!app) {
+            // Open new app only if it's not already open
+            openApp(appName);
+          }
+        }} 
+      />
     </div>
   );
 }

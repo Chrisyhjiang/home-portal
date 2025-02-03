@@ -21,20 +21,23 @@ const SPRING = {
   damping: 12,
 };
 
-export default function Dock() {
+interface Props {
+  openApp: (appName: string) => void;
+}
+
+export default function Dock({ openApp }: Props) {
   const mouseLeft = useMotionValue(-Infinity);
-  const { openApps, openApp, restoreApp } = useAppStore();
+  const { openApps } = useAppStore();
 
   return (
     <motion.div
       className="fixed bottom-6 left-1/2 -translate-x-1/2 flex gap-4 px-6 py-4 bg-gray-900/70 backdrop-blur-lg rounded-2xl shadow-lg z-50"
       onMouseMove={(e) => {
-        const { left, right } = e.currentTarget.getBoundingClientRect();
+        const { left } = e.currentTarget.getBoundingClientRect();
         mouseLeft.set(e.clientX - left);
       }}
       onMouseLeave={() => mouseLeft.set(-Infinity)}
     >
-      {/* Regular Apps */}
       {apps.map((app) => {
         const isRunning = openApps.some((a) => a.appName === app.name);
         const isMinimized = openApps.some(
@@ -45,18 +48,7 @@ export default function Dock() {
           <DockItem
             key={app.name}
             app={app}
-            openApp={() => {
-              if (isMinimized) {
-                restoreApp(app.name);
-                animate(
-                  ".window-rnd",
-                  { scale: 1, opacity: 1 },
-                  { duration: 0.2 }
-                );
-              } else if (!isRunning) {
-                openApp(app.name);
-              }
-            }}
+            openApp={() => openApp(app.name)}
             mouseLeft={mouseLeft}
           />
         );
@@ -66,13 +58,22 @@ export default function Dock() {
 }
 
 interface DockItemProps {
-  app: { name: string; icon: string; link?: string };
+  app: { 
+    name: string; 
+    icon: string; 
+    link?: string;
+    defaultFile?: string;
+  };
   openApp: () => void;
   mouseLeft: MotionValue<number>;
 }
 
 function DockItem({ app, openApp, mouseLeft }: DockItemProps) {
   const ref = useRef<HTMLDivElement>(null);
+  const { openApps } = useAppStore();
+  const isMinimized = openApps.some(
+    a => a.appName === app.name && a.minimized
+  );
 
   const distance = useTransform(() => {
     const bounds = ref.current
@@ -100,7 +101,7 @@ function DockItem({ app, openApp, mouseLeft }: DockItemProps) {
           <motion.div
             ref={ref}
             style={{ x: xSpring, scale: scaleSpring, y }}
-            className="group relative flex flex-col items-center"
+            className={`group relative flex flex-col items-center ${isMinimized ? 'minimized' : ''}`}
             onClick={() => {
               animate(y, [0, -20, 0], {
                 repeat: 2,
@@ -122,6 +123,11 @@ function DockItem({ app, openApp, mouseLeft }: DockItemProps) {
             <span className="absolute -top-8 bg-gray-900 text-white text-xs px-2 py-1 rounded-md opacity-0 group-hover:opacity-100 transition-opacity">
               {app.name}
             </span>
+
+            {/* Add a dot indicator for minimized windows */}
+            {isMinimized && (
+              <div className="absolute -bottom-1 w-1 h-1 bg-white rounded-full" />
+            )}
           </motion.div>
         </Tooltip.Trigger>
 

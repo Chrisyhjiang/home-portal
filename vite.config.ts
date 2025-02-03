@@ -6,10 +6,10 @@ export default defineConfig({
   plugins: [react()],
   resolve: {
     alias: {
-      "@features": path.resolve(__dirname, "src/features"),
-      "@shared": path.resolve(__dirname, "src/shared"),
-      "@hooks": path.resolve(__dirname, "src/hooks"),
-      "@styles": path.resolve(__dirname, "src/styles"),
+      "@": path.resolve(__dirname, "./src"),
+      "@hooks": path.resolve(__dirname, "./src/hooks"),
+      "@features": path.resolve(__dirname, "./src/features"),
+      "@shared": path.resolve(__dirname, "./src/shared"),
     },
   },
 });

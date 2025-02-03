@@ -58,9 +58,6 @@ const PDFViewer: React.FC<PDFViewerProps> = ({ filePath, onClose }) => {
 
   return (
     <div className="w-full h-full">
-      {/* Close Button */}
-      <div className="absolute top-2 left-2 flex gap-2 z-50"></div>
-
       {/* PDF Viewer */}
       <iframe
         src={`${correctedPath}#zoom=125`}
@@ -204,13 +201,15 @@ File: ./src/features/Window/components/Window.tsx
 
 import React, { useState, useEffect } from "react";
 import { Rnd } from "react-rnd";
+import { motion, animate } from "framer-motion";
+import { useAppStore } from "@hooks/useAppStore";
 import "../styles/Window.css";
 
 interface WindowProps {
   title: string;
   isVisible: boolean;
-  onMinimize: () => void;
   onClose: () => void;
+  onMinimize: () => void;
   isMaximizedAlready?: boolean;
   children: React.ReactNode;
 }
@@ -218,19 +217,20 @@ interface WindowProps {
 const Window: React.FC<WindowProps> = ({
   title,
   isVisible,
-  onMinimize,
   onClose,
+  onMinimize,
   isMaximizedAlready = false,
   children,
 }) => {
-  // Initial size and position
   const [size, setSize] = useState({ width: 600, height: 400 });
   const [position, setPosition] = useState({
     x: window.innerWidth / 2 - 300,
     y: window.innerHeight / 2 - 200,
   });
   const [isMaximized, setIsMaximized] = useState(isMaximizedAlready);
-  const [minimized, setMinimized] = useState(false); // New state for minimizing
+  const { minimizeApp, openApps } = useAppStore();
+
+  const appData = openApps.find((app) => app.appName === title);
 
   useEffect(() => {
     if (isMaximized) {
@@ -245,34 +245,51 @@ const Window: React.FC<WindowProps> = ({
     }
   }, [isMaximized]);
 
-  if (!isVisible || minimized) return null; // Hides window when minimized
+  if (!isVisible || appData?.minimized) return null;
 
   return (
-    <Rnd
-      size={size}
-      position={position}
-      bounds="window"
-      className="window-rnd"
-      dragHandleClassName="drag-handle"
-      onDragStop={(e, d) => setPosition({ x: d.x, y: d.y })}
-      onResizeStop={(e, direction, ref, delta, newPosition) => {
-        setSize({ width: ref.offsetWidth, height: ref.offsetHeight });
-        setPosition(newPosition);
-      }}
+    <motion.div
+      initial={{ scale: 1, opacity: 1 }}
+      animate={{ scale: 1, opacity: 1 }}
+      exit={{ scale: 0, opacity: 0 }}
+      transition={{ duration: 0.2 }}
     >
-      <div className="window-top-bar drag-handle">
-        <div className="window-controls">
-          <button onClick={() => setMinimized(true)}>_</button> {/* Minimize */}
-          <button onClick={() => setIsMaximized(!isMaximized)}>
-            {isMaximized ? "❐" : "[]"}
-          </button>
-          <button onClick={onClose}>X</button> {/* Close */}
+      <Rnd
+        size={size}
+        position={position}
+        bounds="window"
+        className="window-rnd"
+        dragHandleClassName="drag-handle"
+        onDragStop={(e, d) => setPosition({ x: d.x, y: d.y })}
+        onResizeStop={(e, direction, ref, delta, newPosition) => {
+          setSize({ width: ref.offsetWidth, height: ref.offsetHeight });
+          setPosition(newPosition);
+        }}
+      >
+        <div className="window-top-bar drag-handle">
+          <div className="window-controls">
+            <button
+              onClick={() => {
+                animate(
+                  ".window-rnd",
+                  { scale: 0, opacity: 0 },
+                  { duration: 0.2 }
+                ).then(() => minimizeApp(title));
+              }}
+            >
+              _
+            </button>
+            <button onClick={() => setIsMaximized(!isMaximized)}>
+              {isMaximized ? "❐" : "[]"}
+            </button>
+            <button onClick={onClose}>X</button>
+          </div>
+          <span className="window-title">{title}</span>
         </div>
-        <span className="window-title">{title}</span>
-      </div>
 
-      <div className="window-content">{children}</div>
-    </Rnd>
+        <div className="window-content">{children}</div>
+      </Rnd>
+    </motion.div>
   );
 };
 
@@ -367,12 +384,9 @@ import {
   animate,
   MotionValue,
 } from "framer-motion";
+import { useAppStore } from "@hooks/useAppStore";
 import AppIcon from "@shared/components/AppIcon/AppIcon";
 import { apps } from "@shared/constants";
-
-interface DockProps {
-  openApp: (app: string) => void;
-}
 
 const SCALE = 1.75;
 const DISTANCE = 70;
@@ -383,9 +397,9 @@ const SPRING = {
   damping: 12,
 };
 
-export default function Dock({ openApp }: DockProps) {
+export default function Dock() {
   const mouseLeft = useMotionValue(-Infinity);
-  const mouseRight = useMotionValue(-Infinity);
+  const { openApps, openApp, restoreApp } = useAppStore();
 
   return (
     <motion.div
@@ -393,28 +407,43 @@ export default function Dock({ openApp }: DockProps) {
       onMouseMove={(e) => {
         const { left, right } = e.currentTarget.getBoundingClientRect();
         mouseLeft.set(e.clientX - left);
-        mouseRight.set(right - e.clientX);
       }}
-      onMouseLeave={() => {
-        mouseLeft.set(-Infinity);
-        mouseRight.set(-Infinity);
-      }}
+      onMouseLeave={() => mouseLeft.set(-Infinity)}
     >
-      {apps.map((app) => (
-        <DockItem
-          key={app.name}
-          app={app}
-          openApp={openApp}
-          mouseLeft={mouseLeft}
-        />
-      ))}
+      {/* Regular Apps */}
+      {apps.map((app) => {
+        const isRunning = openApps.some((a) => a.appName === app.name);
+        const isMinimized = openApps.some(
+          (a) => a.appName === app.name && a.minimized
+        );
+
+        return (
+          <DockItem
+            key={app.name}
+            app={app}
+            openApp={() => {
+              if (isMinimized) {
+                restoreApp(app.name);
+                animate(
+                  ".window-rnd",
+                  { scale: 1, opacity: 1 },
+                  { duration: 0.2 }
+                );
+              } else if (!isRunning) {
+                openApp(app.name);
+              }
+            }}
+            mouseLeft={mouseLeft}
+          />
+        );
+      })}
     </motion.div>
   );
 }
 
 interface DockItemProps {
   app: { name: string; icon: string; link?: string };
-  openApp: (app: string) => void;
+  openApp: () => void;
   mouseLeft: MotionValue<number>;
 }
 
@@ -454,26 +483,15 @@ function DockItem({ app, openApp, mouseLeft }: DockItemProps) {
                 duration: 0.7,
                 ease: "easeInOut",
               });
-              if (!app.link) openApp(app.name);
+              openApp();
             }}
           >
             <div className="w-14 h-14 flex items-center justify-center rounded-full bg-gray-800 shadow-md border border-gray-300 overflow-hidden">
-              {app.link ? (
-                <a href={app.link} target="_blank" rel="noopener noreferrer">
-                  <motion.img
-                    src={app.icon}
-                    className="w-12 h-12 object-cover rounded-full"
-                    alt={app.name}
-                  />
-                </a>
-              ) : (
-                // Notice we do not pass an onClick here to avoid duplication.
-                <AppIcon
-                  name={app.name}
-                  icon={app.icon}
-                  className="w-12 h-12 object-cover rounded-full"
-                />
-              )}
+              <motion.img
+                src={app.icon}
+                className="w-12 h-12 object-cover rounded-full"
+                alt={app.name}
+              />
             </div>
 
             {/* Label Above Icon (only visible on hover) */}
@@ -537,21 +555,48 @@ File: ./src/hooks/useAppStore.ts
 import { create } from "zustand";
 
 interface AppState {
-  openApps: { appName: string; filePath?: string }[];
-  openApp: (appName: string, options?: { filePath?: string }) => void;
+  openApps: { appName: string; minimized: boolean; iconPreview?: string }[];
+  openApp: (appName: string, options?: { iconPreview?: string }) => void;
+  minimizeApp: (appName: string) => void;
+  restoreApp: (appName: string) => void;
   closeApp: (appName: string) => void;
 }
 
 export const useAppStore = create<AppState>((set, get) => ({
   openApps: [],
+
   openApp: (appName, options) =>
     set((state) => {
-      // If already open, do not add again.
-      if (state.openApps.find((app) => app.appName === appName)) {
-        return state;
+      const existingApp = state.openApps.find((app) => app.appName === appName);
+      if (existingApp) {
+        return {
+          openApps: state.openApps.map((app) =>
+            app.appName === appName ? { ...app, minimized: false } : app
+          ),
+        };
       }
-      return { openApps: [...state.openApps, { appName, ...options }] };
+      return {
+        openApps: [
+          ...state.openApps,
+          { appName, minimized: false, ...options },
+        ],
+      };
     }),
+
+  minimizeApp: (appName) =>
+    set((state) => ({
+      openApps: state.openApps.map((app) =>
+        app.appName === appName ? { ...app, minimized: true } : app
+      ),
+    })),
+
+  restoreApp: (appName) =>
+    set((state) => ({
+      openApps: state.openApps.map((app) =>
+        app.appName === appName ? { ...app, minimized: false } : app
+      ),
+    })),
+
   closeApp: (appName) =>
     set((state) => ({
       openApps: state.openApps.filter((app) => app.appName !== appName),
@@ -567,40 +612,30 @@ Directory structure of src excluding node_modules:
 │   └── react.svg
 ├── features
 │   ├── Desktop
-│   │   ├── components
-│   │   │   └── Desktop.tsx
-│   │   ├── hooks
-│   │   └── styles
+│   │   └── components
+│   │       └── Desktop.tsx
 │   ├── Dock
 │   │   ├── components
 │   │   │   └── Dock.tsx
-│   │   ├── hooks
 │   │   └── styles
+│   │       └── Dock.css
 │   ├── Finder
 │   │   ├── components
 │   │   │   └── Finder.tsx
-│   │   ├── hooks
 │   │   └── styles
 │   │       └── Finder.css
 │   ├── PDFViewer
-│   │   ├── components
-│   │   │   └── PDFViewer.tsx
-│   │   ├── hooks
-│   │   └── styles
+│   │   └── components
+│   │       └── PDFViewer.tsx
 │   ├── Terminal
-│   │   ├── components
-│   │   │   └── Terminal.tsx
-│   │   ├── hooks
-│   │   └── styles
+│   │   └── components
+│   │       └── Terminal.tsx
 │   ├── Topbar
-│   │   ├── components
-│   │   │   └── Topbar.tsx
-│   │   ├── hooks
-│   │   └── styles
+│   │   └── components
+│   │       └── Topbar.tsx
 │   └── Window
 │       ├── components
 │       │   └── Window.tsx
-│       ├── hooks
 │       └── styles
 │           └── Window.css
 ├── hooks
@@ -616,4 +651,4 @@ Directory structure of src excluding node_modules:
 │   └── index.css
 └── vite-env.d.ts
 
-36 directories, 18 files
+25 directories, 19 files
