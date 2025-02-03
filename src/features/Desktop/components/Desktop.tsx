@@ -6,6 +6,7 @@ import Terminal from "@features/Terminal/components/Terminal";
 import Window from "@features/Window/components/Window";
 import PDFViewer from "@features/PDFViewer/components/PDFViewer";
 import { useRef, useEffect } from "react";
+import { apps } from "@shared/constants";
 
 export default function Desktop() {
   const { openApps, openApp, closeApp, minimizeApp, restoreApp } = useAppStore();
@@ -69,7 +70,13 @@ export default function Desktop() {
             restoreApp(appName);
           } else if (!app) {
             // Open new app only if it's not already open
-            openApp(appName);
+            // Special handling for PDFViewer to include default file
+            const appConfig = apps.find(a => a.name === appName);
+            if (appName === "PDFViewer" && appConfig?.defaultFile) {
+              openApp(appName, { filePath: appConfig.defaultFile });
+            } else {
+              openApp(appName);
+            }
           }
         }} 
       />
