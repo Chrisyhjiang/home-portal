@@ -61,7 +61,13 @@ const DesktopIcon: React.FC<DesktopIconProps> = ({ app, onOpen, onDragEnd }) => 
             className="w-12 h-12 object-cover rounded-full"
           />
         </div>
-        <span className="text-white text-xs px-2 py-1 rounded-md opacity-0 group-hover:opacity-100 transition-opacity">
+        <span 
+          className="text-white text-xs px-2 py-1 rounded-md opacity-0 group-hover:opacity-100 transition-opacity"
+          style={{ 
+            textShadow: '0 1px 3px rgba(0, 0, 0, 0.8)',
+            backgroundColor: 'rgba(0, 0, 0, 0.6)'
+          }}
+        >
           {app.name}
         </span>
       </div>
@@ -162,9 +168,6 @@ export default function Desktop() {
             />
           ))}
           {/* GitHub Icon */}
-          <div className="github-icon" onClick={() => openOrRestoreWindow("GitHub")}>
-            <img src="/path/to/github-icon.png" alt="GitHub" />
-          </div>
         </div>
       </div>
 

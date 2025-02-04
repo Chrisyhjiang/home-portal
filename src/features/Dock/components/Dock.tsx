@@ -1,5 +1,4 @@
 import React, { useRef } from "react";
-import * as Tooltip from "@radix-ui/react-tooltip";
 import {
   motion,
   useMotionValue,
@@ -101,52 +100,36 @@ function DockItem({ app, openApp, mouseLeft }: DockItemProps) {
   const y = useMotionValue(0);
 
   return (
-    <Tooltip.Provider>
-      <Tooltip.Root>
-        <Tooltip.Trigger asChild>
-          <motion.div
-            ref={ref}
-            style={{ x: xSpring, scale: scaleSpring, y }}
-            className={`group relative flex flex-col items-center ${isMinimized ? 'minimized' : ''}`}
-            onClick={() => {
-              animate(y, [0, -20, 0], {
-                repeat: 2,
-                duration: 0.7,
-                ease: "easeInOut",
-              });
-              openApp();
-            }}
-          >
-            <div className="w-14 h-14 flex items-center justify-center rounded-full bg-gray-800 shadow-md border border-gray-300 overflow-hidden">
-              <motion.img
-                src={app.icon}
-                className="w-12 h-12 object-cover rounded-full"
-                alt={app.name}
-              />
-            </div>
+    <motion.div
+      ref={ref}
+      style={{ x: xSpring, scale: scaleSpring, y }}
+      className={`group relative flex flex-col items-center ${isMinimized ? 'minimized' : ''}`}
+      onClick={() => {
+        animate(y, [0, -20, 0], {
+          repeat: 2,
+          duration: 0.7,
+          ease: "easeInOut",
+        });
+        openApp();
+      }}
+    >
+      <div className="w-14 h-14 flex items-center justify-center rounded-full bg-gray-800 shadow-md border border-gray-300 overflow-hidden">
+        <motion.img
+          src={app.icon}
+          className="w-12 h-12 object-cover rounded-full"
+          alt={app.name}
+        />
+      </div>
 
-            {/* Label Above Icon (only visible on hover) */}
-            <span className="absolute -top-8 bg-gray-900 text-white text-xs px-2 py-1 rounded-md opacity-0 group-hover:opacity-100 transition-opacity">
-              {app.name}
-            </span>
+      {/* Label Above Icon (only visible on hover) */}
+      <span className="absolute -top-8 bg-gray-900 text-white text-xs px-2 py-1 rounded-md opacity-0 group-hover:opacity-100 transition-opacity">
+        {app.name}
+      </span>
 
-            {/* Add a dot indicator for minimized windows */}
-            {isMinimized && (
-              <div className="absolute -bottom-1 w-1 h-1 bg-white rounded-full" />
-            )}
-          </motion.div>
-        </Tooltip.Trigger>
-
-        <Tooltip.Portal>
-          <Tooltip.Content
-            sideOffset={8}
-            className="bg-gray-700 px-2 py-1.5 text-sm rounded text-white border border-gray-600 shadow"
-          >
-            {app.name}
-            <Tooltip.Arrow />
-          </Tooltip.Content>
-        </Tooltip.Portal>
-      </Tooltip.Root>
-    </Tooltip.Provider>
+      {/* Add a dot indicator for minimized windows */}
+      {isMinimized && (
+        <div className="absolute -bottom-1 w-1 h-1 bg-white rounded-full" />
+      )}
+    </motion.div>
   );
 }
