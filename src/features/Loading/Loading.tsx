@@ -1,5 +1,5 @@
 import React from 'react';
-import './Loading.css'; // Import the CSS file for styling
+import './styles/Loading.css'; // Import the CSS file for styling
 
 const Loading: React.FC = () => {
     return (
@@ -16,7 +16,7 @@ const Loading: React.FC = () => {
                 <div id='warning'>
                     <p>
                         <div className='exclamation'>!</div>
-                        &nbsp CAUTION, Do not turn off.
+                        &nbsp;CAUTION, Do not turn off.
                     </p>
                     <div id='line-cascates'></div>
                 </div>
@@ -25,4 +25,4 @@ const Loading: React.FC = () => {
     );
 };
 
-export default Loading; 
+export default Loading;

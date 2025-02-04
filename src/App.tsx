@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import Desktop from "./features/Desktop/components/Desktop";
-import Loading from './components/Loading';
+import Loading from './features/Loading/Loading';
 
 const App: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
@@ -8,20 +8,23 @@ const App: React.FC = () => {
   const [fadeIn, setFadeIn] = useState(false);
 
   useEffect(() => {
-    // Simulate a loading delay
     const timer = setTimeout(() => {
       setFadeOut(true);
       setTimeout(() => {
         setIsLoading(false);
         setFadeIn(true);
-      }, 1000); // Duration of the fade-out animation
-    }, 4500); // 3 seconds for animation + 1.5 seconds extra
+      }, 1000);
+    }, 4500);
 
     return () => clearTimeout(timer);
   }, []);
 
   if (isLoading) {
-    return <div className={fadeOut ? 'fade-out' : ''}><Loading /></div>;
+    return (
+      <div className={fadeOut ? 'fade-out' : ''}>
+        <Loading />
+      </div>
+    );
   }
 
   return (
