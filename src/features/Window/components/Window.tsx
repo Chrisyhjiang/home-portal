@@ -105,6 +105,26 @@ const Window: React.FC<WindowProps> = ({
   }, [windowId, registerWindow, title]);
 
   const handleMaximize = () => {
+    if (isMaximized) {
+      // When un-maximizing, restore to previous size and position
+      if (preMaximizedState) {
+        setSize(preMaximizedState.size);
+        setPosition(preMaximizedState.position);
+      }
+    } else {
+      // When maximizing, save current state and set new size
+      setPreMaximizedState({
+        position,
+        size
+      });
+      const width = window.innerWidth * 0.8;
+      const height = window.innerHeight * 0.8;
+      setSize({ width, height });
+      setPosition({
+        x: (window.innerWidth - width) / 2,
+        y: (window.innerHeight - height) / 2
+      });
+    }
     setIsMaximized(!isMaximized);
   };
 
@@ -166,12 +186,12 @@ const Window: React.FC<WindowProps> = ({
             minWidth={300}
             minHeight={200}
             dragHandleClassName="window-top-bar"
-            disableDragging={isMaximized}
-            enableResizing={!isMaximized}
+            disableDragging={false}
+            enableResizing={true}
             className={`${windowClassName} ${windowId}`}
             style={{ 
               zIndex,
-              transition: 'width 0.3s, height 0.3s'
+              transition: isAnimating ? 'width 0.3s, height 0.3s' : 'none'
             }}
           >
             <div className={`window-container ${isMaximized ? 'maximized' : ''}`}>
