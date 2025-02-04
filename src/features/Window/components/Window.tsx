@@ -31,7 +31,15 @@ const Window: React.FC<WindowProps> = ({
 }) => {
   console.log('Window component initialized with windowId:', windowId, 'and title:', title);
 
-  const [size, setSize] = useState({ width: 600, height: 400 });
+  const [size, setSize] = useState(() => {
+    if (title === "PDFViewer") {
+      return {
+        width: Math.min(window.innerWidth * 0.6, 900),
+        height: Math.min(window.innerHeight * 0.6, 800)
+      };
+    }
+    return { width: 600, height: 400 };
+  });
   const [position, setPosition] = useState(startPosition);
   const [isMaximized, setIsMaximized] = useState(isMaximizedAlready);
   const { openApps, setWindowPosition } = useAppStore();
@@ -46,17 +54,21 @@ const Window: React.FC<WindowProps> = ({
 
   useEffect(() => {
     if (title === "PDFViewer") {
-      setSize({ width: 900, height: 1100 });
-    }
+      const width = isMaximized 
+        ? Math.min(window.innerWidth * 0.8, 1200)
+        : Math.min(window.innerWidth * 0.6, 900);
+      
+      const height = isMaximized
+        ? Math.min(window.innerHeight * 0.8, 1000)
+        : Math.min(window.innerHeight * 0.6, 800);
 
-    const app = openApps.find(a => a.appName === title);
-    if (app?.startPosition) {
-      setPosition(app.startPosition);
-    } else if (app?.lastPosition) {
-      setPosition(app.lastPosition.position);
-      setSize(app.lastPosition.size);
+      setSize({ width, height });
+      setPosition({
+        x: (window.innerWidth - width) / 2,
+        y: (window.innerHeight - height) / 2
+      });
     }
-  }, [title]);
+  }, [isMaximized, title]);
 
   useEffect(() => {
     if (isMaximized) {
@@ -132,11 +144,9 @@ const Window: React.FC<WindowProps> = ({
     <AnimatePresence>
       {isVisible && !isClosing && (
         <motion.div
-          className={`${windowClassName} ${windowId}`}
-          style={{ zIndex }}
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          exit={{ opacity: 0, scale: 0.95 }}
           transition={{ duration: 0.2 }}
           onClick={handleClick}
         >
@@ -145,37 +155,40 @@ const Window: React.FC<WindowProps> = ({
             position={position}
             onDragStop={(e, d) => {
               setPosition({ x: d.x, y: d.y });
-              setWindowPosition(title, {
-                position: { x: d.x, y: d.y },
-                size
-              });
             }}
             onResizeStop={(e, direction, ref, delta, position) => {
-              const newSize = { 
-                width: ref.offsetWidth, 
-                height: ref.offsetHeight 
-              };
-              setSize(newSize);
-              setPosition(position);
-              setWindowPosition(title, {
-                position,
-                size: newSize
+              setSize({
+                width: ref.offsetWidth,
+                height: ref.offsetHeight
               });
+              setPosition(position);
             }}
-            bounds="window"
-            dragHandleClassName="drag-handle"
+            minWidth={300}
+            minHeight={200}
+            dragHandleClassName="window-top-bar"
+            disableDragging={isMaximized}
+            enableResizing={!isMaximized}
+            className={`${windowClassName} ${windowId}`}
+            style={{ 
+              zIndex,
+              transition: 'width 0.3s, height 0.3s'
+            }}
           >
-            <div className="window-top-bar drag-handle">
-              <div className="window-controls">
-                <button onClick={onMinimize} className="minimize-button">_</button>
-                <button onClick={handleMaximize}>
-                  {isMaximized ? "❐" : "[]"}
-                </button>
-                <button onClick={handleClose}>X</button>
+            <div className={`window-container ${isMaximized ? 'maximized' : ''}`}>
+              <div className="window-top-bar">
+                <div className="window-controls">
+                  <button onClick={onMinimize} className="minimize-button">_</button>
+                  <button onClick={handleMaximize}>
+                    {isMaximized ? "❐" : "[]"}
+                  </button>
+                  <button onClick={handleClose}>X</button>
+                </div>
+                <span className="window-title">{title}</span>
               </div>
-              <span className="window-title">{title}</span>
+              <div className="window-content" style={{ height: 'calc(100% - 30px)' }}>
+                {children}
+              </div>
             </div>
-            <div className="window-content">{children}</div>
           </Rnd>
         </motion.div>
       )}

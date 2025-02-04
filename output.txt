@@ -177,6 +177,8 @@ import { motion, useMotionValue, animate } from 'framer-motion';
 import { PanInfo } from 'framer-motion';
 import AppIcon from '@shared/components/AppIcon/AppIcon';
 import { Rnd } from 'react-rnd';
+import { useWindowOpener } from "@hooks/useWindowOpener";
+import { useWindowManager } from "@hooks/useWindowManager";
 
 interface DesktopIconProps {
   app: {
@@ -245,6 +247,8 @@ export default function Desktop() {
   } = useAppStore();
   
   const dragRefs = useRef<Record<string, React.RefObject<HTMLDivElement>>>({});
+  const { openOrRestoreWindow } = useWindowOpener();
+  const { windowStack } = useWindowManager();
 
   // Initialize desktop icons if empty
   useEffect(() => {
@@ -291,25 +295,7 @@ export default function Desktop() {
   // Update the desktop icon click handler
   const handleDesktopIconClick = (app: { name: string; icon: string }) => {
     console.log('Desktop icon clicked:', app.name);
-    const openedApp = openApps.find(a => a.appName === app.name);
-    
-    if (openedApp) {
-      if (openedApp.minimized) {
-        console.log('Restoring minimized app:', app.name);
-        restoreApp(app.name);
-      } else {
-        console.log('App already open:', app.name);
-      }
-    } else {
-      console.log('Opening new app:', app.name);
-      // Calculate center position
-      const startPosition = {
-        x: window.innerWidth / 2 - 300, // Center horizontally (assuming 600px width)
-        y: window.innerHeight / 2 - 200 // Center vertically (assuming 400px height)
-      };
-      console.log('Opening with center position:', startPosition);
-      openApp(app.name, { startPosition });
-    }
+    openOrRestoreWindow(app.name);
   };
 
   return (
@@ -351,18 +337,23 @@ export default function Desktop() {
       {/* Windows Layer */}
       {openApps.length > 0 && (
         <div className="relative z-30">
-          {openApps.map(({ appName, filePath, minimized, startPosition }, index) => {
+          {openApps.map(({ appName, filePath, minimized, startPosition }) => {
             const initialPosition = startPosition || {
               x: window.innerWidth / 2 - 300,
               y: window.innerHeight / 2 - 200
             };
+
+            // Calculate z-index based on window stack position
+            const zIndex = windowStack.indexOf(appName);
+            const baseZIndex = 30;
+            const calculatedZIndex = zIndex === -1 ? baseZIndex : baseZIndex + zIndex;
 
             return (
               <div
                 key={appName}
                 style={{ 
                   position: "absolute", 
-                  zIndex: 30 + index,
+                  zIndex: calculatedZIndex,
                   display: minimized ? 'none' : 'block'
                 }}
               >
@@ -372,6 +363,7 @@ export default function Desktop() {
                   onClose={() => closeApp(appName)}
                   onMinimize={() => handleMinimize(appName)}
                   startPosition={initialPosition}
+                  windowId={appName}
                 >
                   {appName === "Finder" && <Finder />}
                   {appName === "Terminal" && <Terminal />}
@@ -421,9 +413,10 @@ File: ./src/features/Window/components/Window.tsx
 
 import React, { useState, useEffect } from "react";
 import { Rnd } from "react-rnd";
-import { motion, animate } from "framer-motion";
+import { motion, animate, AnimatePresence } from "framer-motion";
 import { useAppStore } from "@hooks/useAppStore";
 import "../styles/Window.css";
+import { useWindowManager } from '../../../hooks/useWindowManager';
 
 interface WindowProps {
   title: string;
@@ -433,6 +426,7 @@ interface WindowProps {
   isMaximizedAlready?: boolean;
   children: React.ReactNode;
   startPosition?: { x: number; y: number };
+  windowId: string;
 }
 
 const Window: React.FC<WindowProps> = ({
@@ -443,16 +437,12 @@ const Window: React.FC<WindowProps> = ({
   isMaximizedAlready = false,
   children,
   startPosition = { 
-    x: window.innerWidth / 2 - 300, // Default to center
-    y: window.innerHeight / 2 - 200 
-  }
+    x: (window.innerWidth - 600) / 2,
+    y: (window.innerHeight - 400) / 2
+  },
+  windowId
 }) => {
-  console.log('Window component rendered:', {
-    title,
-    isVisible,
-    isMaximizedAlready,
-    hasChildren: !!children
-  });
+  console.log('Window component initialized with windowId:', windowId, 'and title:', title);
 
   const [size, setSize] = useState({ width: 600, height: 400 });
   const [position, setPosition] = useState(startPosition);
@@ -464,6 +454,8 @@ const Window: React.FC<WindowProps> = ({
     position: { x: number; y: number };
     size: { width: number; height: number };
   } | null>(null);
+  const [isClosing, setIsClosing] = useState(false);
+  const { bringToFront, windowStack, registerWindow } = useWindowManager();
 
   useEffect(() => {
     if (title === "PDFViewer") {
@@ -473,8 +465,6 @@ const Window: React.FC<WindowProps> = ({
     const app = openApps.find(a => a.appName === title);
     if (app?.startPosition) {
       setPosition(app.startPosition);
-      setIsAnimating(true);
-      handleOpenAnimation(app.startPosition);
     } else if (app?.lastPosition) {
       setPosition(app.lastPosition.position);
       setSize(app.lastPosition.size);
@@ -506,60 +496,14 @@ const Window: React.FC<WindowProps> = ({
     }
   }, [isMaximized]);
 
-  const handleOpenAnimation = async (startPos: { x: number; y: number }) => {
-    const targetPosition = { x: 20, y: 20 };
-
-    try {
-      const rndElement = document.querySelector(`.${windowClassName}`);
-      if (!rndElement) return;
-
-      rndElement.style.transformOrigin = 'center center';
-      setPosition({ x: 0, y: 0 });
-
-      await animate(
-        rndElement,
-        {
-          scale: [0.1, 0.2, 0.4, 0.6, 0.8, 0.9, 1],
-          x: [
-            startPos.x,
-            startPos.x + (targetPosition.x - startPos.x) * 0.1,
-            startPos.x + (targetPosition.x - startPos.x) * 0.3,
-            startPos.x + (targetPosition.x - startPos.x) * 0.5,
-            startPos.x + (targetPosition.x - startPos.x) * 0.7,
-            startPos.x + (targetPosition.x - startPos.x) * 0.9,
-            targetPosition.x
-          ],
-          y: [
-            startPos.y,
-            startPos.y - 40,
-            startPos.y - 30,
-            targetPosition.y + 40,
-            targetPosition.y + 20,
-            targetPosition.y + 5,
-            targetPosition.y
-          ]
-        },
-        {
-          duration: 0.6,
-          ease: [0.34, 1.56, 0.64, 1],
-          times: [0, 0.15, 0.3, 0.5, 0.7, 0.85, 1]
-        }
-      );
-
-      requestAnimationFrame(() => {
-        setPosition(targetPosition);
-        setWindowPosition(title, {
-          position: targetPosition,
-          size
-        });
-      });
-    } catch (error) {
-      console.error('Animation failed:', error);
-      setPosition(targetPosition);
-    } finally {
-      setIsAnimating(false);
+  useEffect(() => {
+    console.log('Window registration effect - windowId:', windowId);
+    if (windowId) {
+      registerWindow(windowId);
+    } else {
+      console.warn('Attempting to register window but windowId is undefined for title:', title);
     }
-  };
+  }, [windowId, registerWindow, title]);
 
   const handleMaximize = () => {
     setIsMaximized(!isMaximized);
@@ -580,48 +524,75 @@ const Window: React.FC<WindowProps> = ({
     }
   };
 
-  if (!isVisible) return null;
+  const handleClose = () => {
+    setIsClosing(true);
+    // Wait for animation to complete before calling onClose
+    setTimeout(() => onClose(), 200);
+  };
+
+  const handleClick = () => {
+    console.log('Window clicked - windowId:', windowId, 'title:', title);
+    if (windowId) {
+      bringToFront(windowId);
+    } else {
+      console.error("windowId is undefined for window title:", title);
+    }
+  };
+
+  const zIndex = windowStack.indexOf(windowId);
 
   return (
-    <div className={windowClassName}>
-      <Rnd
-        size={size}
-        position={position}
-        onDragStop={(e, d) => {
-          setPosition({ x: d.x, y: d.y });
-          setWindowPosition(title, {
-            position: { x: d.x, y: d.y },
-            size
-          });
-        }}
-        onResizeStop={(e, direction, ref, delta, position) => {
-          const newSize = { 
-            width: ref.offsetWidth, 
-            height: ref.offsetHeight 
-          };
-          setSize(newSize);
-          setPosition(position);
-          setWindowPosition(title, {
-            position,
-            size: newSize
-          });
-        }}
-        bounds="window"
-        dragHandleClassName="drag-handle"
-      >
-        <div className="window-top-bar drag-handle">
-          <div className="window-controls">
-            <button onClick={onMinimize} className="minimize-button">_</button>
-            <button onClick={handleMaximize}>
-              {isMaximized ? "❐" : "[]"}
-            </button>
-            <button onClick={onClose}>X</button>
-          </div>
-          <span className="window-title">{title}</span>
-        </div>
-        <div className="window-content">{children}</div>
-      </Rnd>
-    </div>
+    <AnimatePresence>
+      {isVisible && !isClosing && (
+        <motion.div
+          className={`${windowClassName} ${windowId}`}
+          style={{ zIndex }}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.2 }}
+          onClick={handleClick}
+        >
+          <Rnd
+            size={size}
+            position={position}
+            onDragStop={(e, d) => {
+              setPosition({ x: d.x, y: d.y });
+              setWindowPosition(title, {
+                position: { x: d.x, y: d.y },
+                size
+              });
+            }}
+            onResizeStop={(e, direction, ref, delta, position) => {
+              const newSize = { 
+                width: ref.offsetWidth, 
+                height: ref.offsetHeight 
+              };
+              setSize(newSize);
+              setPosition(position);
+              setWindowPosition(title, {
+                position,
+                size: newSize
+              });
+            }}
+            bounds="window"
+            dragHandleClassName="drag-handle"
+          >
+            <div className="window-top-bar drag-handle">
+              <div className="window-controls">
+                <button onClick={onMinimize} className="minimize-button">_</button>
+                <button onClick={handleMaximize}>
+                  {isMaximized ? "❐" : "[]"}
+                </button>
+                <button onClick={handleClose}>X</button>
+              </div>
+              <span className="window-title">{title}</span>
+            </div>
+            <div className="window-content">{children}</div>
+          </Rnd>
+        </motion.div>
+      )}
+    </AnimatePresence>
   );
 };
 
@@ -719,6 +690,7 @@ import {
 import { useAppStore } from "@hooks/useAppStore";
 import AppIcon from "@shared/components/AppIcon/AppIcon";
 import { apps } from "@shared/constants";
+import { useWindowOpener } from "@hooks/useWindowOpener";
 
 const SCALE = 1.75;
 const DISTANCE = 70;
@@ -736,33 +708,10 @@ interface Props {
 export default function Dock({ openApp }: Props) {
   const mouseLeft = useMotionValue(-Infinity);
   const { openApps, minimizeApp, restoreApp } = useAppStore();
+  const { openOrRestoreWindow } = useWindowOpener();
 
   const handleDockIconClick = (appName: string) => {
-    const app = openApps.find(a => a.appName === appName);
-    const iconImg = document.querySelector(`img[alt="${appName}"]`);
-    const dockIcon = iconImg?.closest('.group');
-    
-    if (!dockIcon) {
-      console.error('Could not find dock icon for:', appName);
-      return;
-    }
-
-    const dockIconRect = dockIcon.getBoundingClientRect();
-    const startPosition = {
-      x: dockIconRect.left,
-      y: dockIconRect.top
-    };
-
-    if (app) {
-      if (app.minimized) {
-        // If app is minimized, restore it
-        restoreApp(appName);
-      }
-      // If app is already open and not minimized, do nothing
-    } else {
-      // If app isn't open at all, open it with starting position
-      openApp(appName, { startPosition });
-    }
+    openOrRestoreWindow(appName);
   };
 
   return (
@@ -921,6 +870,46 @@ File: ./src/vite-env.d.ts
 
 /// <reference types="vite/client" />
 
+File: ./src/hooks/useWindowOpener.ts
+
+import { useAppStore } from "./useAppStore";
+import { apps } from "@shared/constants";
+
+export const useWindowOpener = () => {
+  const { openApps, openApp, restoreApp, minimizeApp } = useAppStore();
+
+  const openOrRestoreWindow = (appName: string, options?: { filePath?: string }) => {
+    const openedApp = openApps.find(a => a.appName === appName);
+    
+    if (openedApp) {
+      if (openedApp.minimized) {
+        console.log(`[${appName}] Restoring minimized app`);
+        restoreApp(appName);
+      } else {
+        console.log(`[${appName}] App already open`);
+      }
+    } else {
+      console.log(`[${appName}] Opening new app`);
+      // Correct center position calculation
+      const startPosition = {
+        x: (window.innerWidth - 600) / 2, // Center horizontally (assuming 600px width)
+        y: (window.innerHeight - 400) / 2 // Center vertically (assuming 400px height)
+      };
+      
+      // Check for default file if it's PDFViewer
+      const appConfig = apps.find(a => a.name === appName);
+      const finalOptions = {
+        ...options,
+        startPosition,
+        ...(appName === "PDFViewer" && appConfig?.defaultFile ? { filePath: appConfig.defaultFile } : {})
+      };
+
+      openApp(appName, finalOptions);
+    }
+  };
+
+  return { openOrRestoreWindow };
+}; 
 File: ./src/hooks/useWindowManager.ts
 
 import { create } from 'zustand';
@@ -930,21 +919,37 @@ interface WindowState {
   windowStack: string[];
   setActiveWindow: (windowId: string) => void;
   bringToFront: (windowId: string) => void;
+  registerWindow: (windowId: string) => void;
 }
 
 export const useWindowManager = create<WindowState>((set) => ({
   activeWindow: null,
   windowStack: [],
-  setActiveWindow: (windowId) => 
-    set({ activeWindow: windowId }),
-  bringToFront: (windowId) =>
-    set((state) => ({
-      activeWindow: windowId,
-      windowStack: [
+  setActiveWindow: (windowId: string) => {
+    console.log(`Setting active window: ${windowId}`);
+    set({ activeWindow: windowId });
+  },
+  bringToFront: (windowId: string) => {
+    console.log(`Bringing window to front: ${windowId}`);
+    set((state) => {
+      const newStack = [
         ...state.windowStack.filter(id => id !== windowId),
         windowId
-      ]
-    }))
+      ];
+      console.log(`Updated window stack: ${newStack}`);
+      return {
+        activeWindow: windowId,
+        windowStack: newStack
+      };
+    });
+  },
+  registerWindow: (windowId: string) => {
+    set((state) => ({
+      windowStack: state.windowStack.includes(windowId) 
+        ? state.windowStack 
+        : [...state.windowStack, windowId]
+    }));
+  }
 })); 
 File: ./src/hooks/useAppStore.ts
 
@@ -1103,7 +1108,8 @@ Directory structure of src excluding node_modules:
 │           └── Window.css
 ├── hooks
 │   ├── useAppStore.ts
-│   └── useWindowManager.ts
+│   ├── useWindowManager.ts
+│   └── useWindowOpener.ts
 ├── lib
 ├── main.tsx
 ├── shared
@@ -1116,4 +1122,4 @@ Directory structure of src excluding node_modules:
 │   └── index.css
 └── vite-env.d.ts
 
-28 directories, 22 files
+28 directories, 23 files
