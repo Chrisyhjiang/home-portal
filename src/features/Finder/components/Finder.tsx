@@ -27,7 +27,7 @@ export default function Finder() {
               </a>
             ) : (
               <button
-                onClick={() => openApp("PDFViewer", { filePath: file.path })}
+                onClick={() => openApp("Resume", { filePath: file.path })}
                 className="finder-button"
               >
                 {file.name}

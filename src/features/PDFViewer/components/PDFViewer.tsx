@@ -1,4 +1,4 @@
-import React from 'react';
+import React from "react";
 
 interface PDFViewerProps {
   filePath?: string;
@@ -17,30 +17,32 @@ const PDFViewer: React.FC<PDFViewerProps> = ({ filePath, onClose }) => {
     : `/docs/${filePath.replace(/^\/?public\//, "")}`;
 
   return (
-    <div style={{
-      width: '100%',
-      height: '100%',
-      overflow: 'hidden',
-      backgroundColor: '#2e2e2e',
-    }}>
+    <div
+      style={{
+        width: "100%",
+        height: "100%",
+        overflow: "hidden",
+        backgroundColor: "#2e2e2e",
+      }}
+    >
       <object
         data={`${correctedPath}#toolbar=0&navpanes=0`}
         type="application/pdf"
         style={{
-          width: '100%',
-          height: '100%',
-          border: 'none',
-          display: 'block',
+          width: "100%",
+          height: "100%",
+          border: "none",
+          display: "block",
         }}
       >
         <embed
           src={`${correctedPath}#toolbar=0&navpanes=0`}
           type="application/pdf"
           style={{
-            width: '100%',
-            height: '100%',
-            border: 'none',
-            display: 'block',
+            width: "100%",
+            height: "100%",
+            border: "none",
+            display: "block",
           }}
         />
       </object>

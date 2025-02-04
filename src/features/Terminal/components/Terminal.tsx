@@ -27,7 +27,7 @@ export default function Terminal() {
       const filePath = `/docs/${args[1]}`;
       console.log("Opening PDF:", filePath);
       newOutput.push(`Opening ${args[1]}...`);
-      openApp("PDFViewer", { filePath });
+      openApp("Resume", { filePath });
     } else if (commands[command]) {
       newOutput.push(commands[command]());
     } else {

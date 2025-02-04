@@ -3,7 +3,7 @@ import { Rnd } from "react-rnd";
 import { motion, animate, AnimatePresence } from "framer-motion";
 import { useAppStore } from "@hooks/useAppStore";
 import "../styles/Window.css";
-import { useWindowManager } from '../../../hooks/useWindowManager';
+import { useWindowManager } from "../../../hooks/useWindowManager";
 
 interface WindowProps {
   title: string;
@@ -23,19 +23,24 @@ const Window: React.FC<WindowProps> = ({
   onMinimize,
   isMaximizedAlready = false,
   children,
-  startPosition = { 
+  startPosition = {
     x: (window.innerWidth - 600) / 2,
-    y: (window.innerHeight - 400) / 2
+    y: (window.innerHeight - 400) / 2,
   },
-  windowId
+  windowId,
 }) => {
-  console.log('Window component initialized with windowId:', windowId, 'and title:', title);
+  console.log(
+    "Window component initialized with windowId:",
+    windowId,
+    "and title:",
+    title
+  );
 
   const [size, setSize] = useState(() => {
-    if (title === "PDFViewer") {
+    if (title === "Resume") {
       return {
         width: Math.min(window.innerWidth * 0.6, 900),
-        height: Math.min(window.innerHeight * 0.6, 800)
+        height: Math.min(window.innerHeight * 0.6, 800),
       };
     }
     return { width: 600, height: 400 };
@@ -43,7 +48,9 @@ const Window: React.FC<WindowProps> = ({
   const [position, setPosition] = useState(startPosition);
   const [isMaximized, setIsMaximized] = useState(isMaximizedAlready);
   const { openApps, setWindowPosition } = useAppStore();
-  const windowClassName = `window-rnd-${title.toLowerCase().replace(/\s+/g, '-')}`;
+  const windowClassName = `window-rnd-${title
+    .toLowerCase()
+    .replace(/\s+/g, "-")}`;
   const [isAnimating, setIsAnimating] = useState(false);
   const [preMaximizedState, setPreMaximizedState] = useState<{
     position: { x: number; y: number };
@@ -53,11 +60,11 @@ const Window: React.FC<WindowProps> = ({
   const { bringToFront, windowStack, registerWindow } = useWindowManager();
 
   useEffect(() => {
-    if (title === "PDFViewer") {
-      const width = isMaximized 
+    if (title === "Resume") {
+      const width = isMaximized
         ? Math.min(window.innerWidth * 0.8, 1200)
         : Math.min(window.innerWidth * 0.6, 900);
-      
+
       const height = isMaximized
         ? Math.min(window.innerHeight * 0.8, 1000)
         : Math.min(window.innerHeight * 0.6, 800);
@@ -65,7 +72,7 @@ const Window: React.FC<WindowProps> = ({
       setSize({ width, height });
       setPosition({
         x: (window.innerWidth - width) / 2,
-        y: (window.innerHeight - height) / 2
+        y: (window.innerHeight - height) / 2,
       });
     }
   }, [isMaximized, title]);
@@ -74,13 +81,13 @@ const Window: React.FC<WindowProps> = ({
     if (isMaximized) {
       const lastWindowState = {
         position,
-        size
+        size,
       };
 
       // Calculate 75% of screen dimensions
       const maxWidth = window.innerWidth * 0.75;
       const maxHeight = window.innerHeight * 0.75;
-      
+
       // Calculate position to center the window
       const centerX = (window.innerWidth - maxWidth) / 2;
       const centerY = (window.innerHeight - maxHeight) / 2;
@@ -96,11 +103,14 @@ const Window: React.FC<WindowProps> = ({
   }, [isMaximized]);
 
   useEffect(() => {
-    console.log('Window registration effect - windowId:', windowId);
+    console.log("Window registration effect - windowId:", windowId);
     if (windowId) {
       registerWindow(windowId);
     } else {
-      console.warn('Attempting to register window but windowId is undefined for title:', title);
+      console.warn(
+        "Attempting to register window but windowId is undefined for title:",
+        title
+      );
     }
   }, [windowId, registerWindow, title]);
 
@@ -115,14 +125,14 @@ const Window: React.FC<WindowProps> = ({
       // When maximizing, save current state and set new size
       setPreMaximizedState({
         position,
-        size
+        size,
       });
       const width = window.innerWidth * 0.8;
       const height = window.innerHeight * 0.8;
       setSize({ width, height });
       setPosition({
         x: (window.innerWidth - width) / 2,
-        y: (window.innerHeight - height) / 2
+        y: (window.innerHeight - height) / 2,
       });
     }
     setIsMaximized(!isMaximized);
@@ -150,7 +160,7 @@ const Window: React.FC<WindowProps> = ({
   };
 
   const handleClick = () => {
-    console.log('Window clicked - windowId:', windowId, 'title:', title);
+    console.log("Window clicked - windowId:", windowId, "title:", title);
     if (windowId) {
       bringToFront(windowId);
     } else {
@@ -179,7 +189,7 @@ const Window: React.FC<WindowProps> = ({
             onResizeStop={(e, direction, ref, delta, position) => {
               setSize({
                 width: ref.offsetWidth,
-                height: ref.offsetHeight
+                height: ref.offsetHeight,
               });
               setPosition(position);
             }}
@@ -189,15 +199,19 @@ const Window: React.FC<WindowProps> = ({
             disableDragging={false}
             enableResizing={true}
             className={`${windowClassName} ${windowId}`}
-            style={{ 
+            style={{
               zIndex,
-              transition: isAnimating ? 'width 0.3s, height 0.3s' : 'none'
+              transition: isAnimating ? "width 0.3s, height 0.3s" : "none",
             }}
           >
-            <div className={`window-container ${isMaximized ? 'maximized' : ''}`}>
+            <div
+              className={`window-container ${isMaximized ? "maximized" : ""}`}
+            >
               <div className="window-top-bar">
                 <div className="window-controls">
-                  <button onClick={onMinimize} className="minimize-button">_</button>
+                  <button onClick={onMinimize} className="minimize-button">
+                    _
+                  </button>
                   <button onClick={handleMaximize}>
                     {isMaximized ? "❐" : "[]"}
                   </button>
@@ -205,7 +219,10 @@ const Window: React.FC<WindowProps> = ({
                 </div>
                 <span className="window-title">{title}</span>
               </div>
-              <div className="window-content" style={{ height: 'calc(100% - 30px)' }}>
+              <div
+                className="window-content"
+                style={{ height: "calc(100% - 30px)" }}
+              >
                 {children}
               </div>
             </div>

@@ -1,10 +1,10 @@
 export const apps = [
   { name: "Finder", icon: "/icons/finder-icon.png" },
   { name: "Terminal", icon: "/icons/terminal.png" },
-  { 
-    name: "PDFViewer", 
+  {
+    name: "Resume",
     icon: "/icons/pdf-icon.png",
-    defaultFile: "/docs/Resume.pdf"
+    defaultFile: "/docs/Resume.pdf",
   },
   {
     name: "GitHub",
