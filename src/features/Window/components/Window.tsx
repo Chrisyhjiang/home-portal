@@ -3,6 +3,7 @@ import { Rnd } from "react-rnd";
 import { motion, animate, AnimatePresence } from "framer-motion";
 import { useAppStore } from "@hooks/useAppStore";
 import "../styles/Window.css";
+import { useWindowManager } from '../../../hooks/useWindowManager';
 
 interface WindowProps {
   title: string;
@@ -12,6 +13,7 @@ interface WindowProps {
   isMaximizedAlready?: boolean;
   children: React.ReactNode;
   startPosition?: { x: number; y: number };
+  windowId: string;
 }
 
 const Window: React.FC<WindowProps> = ({
@@ -24,14 +26,10 @@ const Window: React.FC<WindowProps> = ({
   startPosition = { 
     x: (window.innerWidth - 600) / 2,
     y: (window.innerHeight - 400) / 2
-  }
+  },
+  windowId
 }) => {
-  console.log('Window component rendered:', {
-    title,
-    isVisible,
-    isMaximizedAlready,
-    hasChildren: !!children
-  });
+  console.log('Window component initialized with windowId:', windowId, 'and title:', title);
 
   const [size, setSize] = useState({ width: 600, height: 400 });
   const [position, setPosition] = useState(startPosition);
@@ -44,6 +42,7 @@ const Window: React.FC<WindowProps> = ({
     size: { width: number; height: number };
   } | null>(null);
   const [isClosing, setIsClosing] = useState(false);
+  const { bringToFront, windowStack, registerWindow } = useWindowManager();
 
   useEffect(() => {
     if (title === "PDFViewer") {
@@ -84,6 +83,15 @@ const Window: React.FC<WindowProps> = ({
     }
   }, [isMaximized]);
 
+  useEffect(() => {
+    console.log('Window registration effect - windowId:', windowId);
+    if (windowId) {
+      registerWindow(windowId);
+    } else {
+      console.warn('Attempting to register window but windowId is undefined for title:', title);
+    }
+  }, [windowId, registerWindow, title]);
+
   const handleMaximize = () => {
     setIsMaximized(!isMaximized);
   };
@@ -109,15 +117,28 @@ const Window: React.FC<WindowProps> = ({
     setTimeout(() => onClose(), 200);
   };
 
+  const handleClick = () => {
+    console.log('Window clicked - windowId:', windowId, 'title:', title);
+    if (windowId) {
+      bringToFront(windowId);
+    } else {
+      console.error("windowId is undefined for window title:", title);
+    }
+  };
+
+  const zIndex = windowStack.indexOf(windowId);
+
   return (
     <AnimatePresence>
       {isVisible && !isClosing && (
         <motion.div
-          className={windowClassName}
+          className={`${windowClassName} ${windowId}`}
+          style={{ zIndex }}
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           transition={{ duration: 0.2 }}
+          onClick={handleClick}
         >
           <Rnd
             size={size}

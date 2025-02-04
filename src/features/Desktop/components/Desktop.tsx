@@ -13,6 +13,7 @@ import { PanInfo } from 'framer-motion';
 import AppIcon from '@shared/components/AppIcon/AppIcon';
 import { Rnd } from 'react-rnd';
 import { useWindowOpener } from "@hooks/useWindowOpener";
+import { useWindowManager } from "@hooks/useWindowManager";
 
 interface DesktopIconProps {
   app: {
@@ -82,6 +83,7 @@ export default function Desktop() {
   
   const dragRefs = useRef<Record<string, React.RefObject<HTMLDivElement>>>({});
   const { openOrRestoreWindow } = useWindowOpener();
+  const { windowStack } = useWindowManager();
 
   // Initialize desktop icons if empty
   useEffect(() => {
@@ -170,18 +172,23 @@ export default function Desktop() {
       {/* Windows Layer */}
       {openApps.length > 0 && (
         <div className="relative z-30">
-          {openApps.map(({ appName, filePath, minimized, startPosition }, index) => {
+          {openApps.map(({ appName, filePath, minimized, startPosition }) => {
             const initialPosition = startPosition || {
               x: window.innerWidth / 2 - 300,
               y: window.innerHeight / 2 - 200
             };
+
+            // Calculate z-index based on window stack position
+            const zIndex = windowStack.indexOf(appName);
+            const baseZIndex = 30;
+            const calculatedZIndex = zIndex === -1 ? baseZIndex : baseZIndex + zIndex;
 
             return (
               <div
                 key={appName}
                 style={{ 
                   position: "absolute", 
-                  zIndex: 30 + index,
+                  zIndex: calculatedZIndex,
                   display: minimized ? 'none' : 'block'
                 }}
               >
@@ -191,6 +198,7 @@ export default function Desktop() {
                   onClose={() => closeApp(appName)}
                   onMinimize={() => handleMinimize(appName)}
                   startPosition={initialPosition}
+                  windowId={appName}
                 >
                   {appName === "Finder" && <Finder />}
                   {appName === "Terminal" && <Terminal />}
