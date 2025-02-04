@@ -5,6 +5,12 @@ export const useWindowOpener = () => {
   const { openApps, openApp, restoreApp, minimizeApp } = useAppStore();
 
   const openOrRestoreWindow = (appName: string, options?: { filePath?: string }) => {
+    if (appName === "GitHub") {
+      // Open GitHub profile in a new tab
+      window.open("https://github.com/Chrisyhjiang", "_blank", "noopener,noreferrer");
+      return;
+    }
+
     const openedApp = openApps.find(a => a.appName === appName);
     
     if (openedApp) {

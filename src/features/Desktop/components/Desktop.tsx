@@ -133,6 +133,10 @@ export default function Desktop() {
     openOrRestoreWindow(app.name);
   };
 
+  const handleGitHubClick = () => {
+    window.open("https://github.com/Chrisyhjiang", "_blank", "noopener,noreferrer");
+  };
+
   return (
     <div 
       className="h-screen w-screen relative flex flex-col overflow-hidden pt-12 pb-20"
@@ -153,19 +157,14 @@ export default function Desktop() {
             <DesktopIcon
               key={app.name}
               app={app}
-              onOpen={() => {
-                console.log('onOpen called for:', app.name);
-                handleDesktopIconClick(app);
-              }}
-              onDragEnd={(event, info) => {
-                console.log('Drag ended for:', app.name);
-                updateIconPosition(app.name, {
-                  x: info.point.x,
-                  y: info.point.y
-                });
-              }}
+              onOpen={() => openOrRestoreWindow(app.name)}
+              onDragEnd={(event, info) => updateIconPosition(app.name, { x: info.point.x, y: info.point.y })}
             />
           ))}
+          {/* GitHub Icon */}
+          <div className="github-icon" onClick={() => openOrRestoreWindow("GitHub")}>
+            <img src="/path/to/github-icon.png" alt="GitHub" />
+          </div>
         </div>
       </div>
 
