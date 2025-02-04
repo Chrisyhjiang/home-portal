@@ -11,6 +11,7 @@ import {
 import { useAppStore } from "@hooks/useAppStore";
 import AppIcon from "@shared/components/AppIcon/AppIcon";
 import { apps } from "@shared/constants";
+import { useWindowOpener } from "@hooks/useWindowOpener";
 
 const SCALE = 1.75;
 const DISTANCE = 70;
@@ -28,33 +29,10 @@ interface Props {
 export default function Dock({ openApp }: Props) {
   const mouseLeft = useMotionValue(-Infinity);
   const { openApps, minimizeApp, restoreApp } = useAppStore();
+  const { openOrRestoreWindow } = useWindowOpener();
 
   const handleDockIconClick = (appName: string) => {
-    const app = openApps.find(a => a.appName === appName);
-    const iconImg = document.querySelector(`img[alt="${appName}"]`);
-    const dockIcon = iconImg?.closest('.group');
-    
-    if (!dockIcon) {
-      console.error('Could not find dock icon for:', appName);
-      return;
-    }
-
-    const dockIconRect = dockIcon.getBoundingClientRect();
-    const startPosition = {
-      x: dockIconRect.left,
-      y: dockIconRect.top
-    };
-
-    if (app) {
-      if (app.minimized) {
-        // If app is minimized, restore it
-        restoreApp(appName);
-      }
-      // If app is already open and not minimized, do nothing
-    } else {
-      // If app isn't open at all, open it with starting position
-      openApp(appName, { startPosition });
-    }
+    openOrRestoreWindow(appName);
   };
 
   return (

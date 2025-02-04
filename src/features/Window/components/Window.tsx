@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Rnd } from "react-rnd";
-import { motion, animate } from "framer-motion";
+import { motion, animate, AnimatePresence } from "framer-motion";
 import { useAppStore } from "@hooks/useAppStore";
 import "../styles/Window.css";
 
@@ -11,6 +11,7 @@ interface WindowProps {
   onMinimize: () => void;
   isMaximizedAlready?: boolean;
   children: React.ReactNode;
+  startPosition?: { x: number; y: number };
 }
 
 const Window: React.FC<WindowProps> = ({
@@ -20,13 +21,29 @@ const Window: React.FC<WindowProps> = ({
   onMinimize,
   isMaximizedAlready = false,
   children,
+  startPosition = { 
+    x: (window.innerWidth - 600) / 2,
+    y: (window.innerHeight - 400) / 2
+  }
 }) => {
+  console.log('Window component rendered:', {
+    title,
+    isVisible,
+    isMaximizedAlready,
+    hasChildren: !!children
+  });
+
   const [size, setSize] = useState({ width: 600, height: 400 });
-  const [position, setPosition] = useState({ x: 20, y: 20 });
+  const [position, setPosition] = useState(startPosition);
   const [isMaximized, setIsMaximized] = useState(isMaximizedAlready);
   const { openApps, setWindowPosition } = useAppStore();
   const windowClassName = `window-rnd-${title.toLowerCase().replace(/\s+/g, '-')}`;
   const [isAnimating, setIsAnimating] = useState(false);
+  const [preMaximizedState, setPreMaximizedState] = useState<{
+    position: { x: number; y: number };
+    size: { width: number; height: number };
+  } | null>(null);
+  const [isClosing, setIsClosing] = useState(false);
 
   useEffect(() => {
     if (title === "PDFViewer") {
@@ -36,111 +53,112 @@ const Window: React.FC<WindowProps> = ({
     const app = openApps.find(a => a.appName === title);
     if (app?.startPosition) {
       setPosition(app.startPosition);
-      setIsAnimating(true);
-      handleOpenAnimation(app.startPosition);
     } else if (app?.lastPosition) {
       setPosition(app.lastPosition.position);
       setSize(app.lastPosition.size);
     }
   }, [title]);
 
-  const handleOpenAnimation = async (startPos: { x: number; y: number }) => {
-    const targetPosition = { x: 20, y: 20 };
+  useEffect(() => {
+    if (isMaximized) {
+      const lastWindowState = {
+        position,
+        size
+      };
 
-    try {
-      const rndElement = document.querySelector(`.${windowClassName}`);
-      if (!rndElement) return;
+      // Calculate 75% of screen dimensions
+      const maxWidth = window.innerWidth * 0.75;
+      const maxHeight = window.innerHeight * 0.75;
+      
+      // Calculate position to center the window
+      const centerX = (window.innerWidth - maxWidth) / 2;
+      const centerY = (window.innerHeight - maxHeight) / 2;
 
-      rndElement.style.transformOrigin = 'center center';
+      setSize({ width: maxWidth, height: maxHeight });
+      setPosition({ x: centerX, y: centerY });
+
+      setPreMaximizedState(lastWindowState);
+    } else if (preMaximizedState) {
+      setSize(preMaximizedState.size);
+      setPosition(preMaximizedState.position);
+    }
+  }, [isMaximized]);
+
+  const handleMaximize = () => {
+    setIsMaximized(!isMaximized);
+  };
+
+  const handleDrag = (e, d) => {
+    const { innerWidth, innerHeight } = window;
+    const threshold = 20;
+
+    if (d.x < threshold) {
+      // Snap to left half
+      setSize({ width: innerWidth / 2, height: innerHeight });
       setPosition({ x: 0, y: 0 });
-
-      await animate(
-        rndElement,
-        {
-          scale: [0.1, 0.2, 0.4, 0.6, 0.8, 0.9, 1],
-          x: [
-            startPos.x,
-            startPos.x + (targetPosition.x - startPos.x) * 0.1,
-            startPos.x + (targetPosition.x - startPos.x) * 0.3,
-            startPos.x + (targetPosition.x - startPos.x) * 0.5,
-            startPos.x + (targetPosition.x - startPos.x) * 0.7,
-            startPos.x + (targetPosition.x - startPos.x) * 0.9,
-            targetPosition.x
-          ],
-          y: [
-            startPos.y,
-            startPos.y - 40,
-            startPos.y - 30,
-            targetPosition.y + 40,
-            targetPosition.y + 20,
-            targetPosition.y + 5,
-            targetPosition.y
-          ]
-        },
-        {
-          duration: 0.6,
-          ease: [0.34, 1.56, 0.64, 1],
-          times: [0, 0.15, 0.3, 0.5, 0.7, 0.85, 1]
-        }
-      );
-
-      requestAnimationFrame(() => {
-        setPosition(targetPosition);
-        setWindowPosition(title, {
-          position: targetPosition,
-          size
-        });
-      });
-    } catch (error) {
-      console.error('Animation failed:', error);
-      setPosition(targetPosition);
-    } finally {
-      setIsAnimating(false);
+    } else if (d.x > innerWidth - threshold) {
+      // Snap to right half
+      setSize({ width: innerWidth / 2, height: innerHeight });
+      setPosition({ x: innerWidth / 2, y: 0 });
     }
   };
 
-  if (!isVisible) return null;
+  const handleClose = () => {
+    setIsClosing(true);
+    // Wait for animation to complete before calling onClose
+    setTimeout(() => onClose(), 200);
+  };
 
   return (
-    <div className={windowClassName}>
-      <Rnd
-        size={size}
-        position={position}
-        bounds="window"
-        dragHandleClassName="drag-handle"
-        onDragStop={(e, d) => {
-          setPosition({ x: d.x, y: d.y });
-          setWindowPosition(title, {
-            position: { x: d.x, y: d.y },
-            size
-          });
-        }}
-        onResizeStop={(e, direction, ref, delta, position) => {
-          const newSize = { 
-            width: ref.offsetWidth, 
-            height: ref.offsetHeight 
-          };
-          setSize(newSize);
-          setPosition(position);
-          setWindowPosition(title, {
-            position,
-            size: newSize
-          });
-        }}
-      >
-        <div className="window-top-bar drag-handle">
-          <div className="window-controls">
-            <button onClick={onMinimize} className="minimize-button">_</button>
-            <button onClick={() => setIsMaximized(!isMaximized)}>
-              {isMaximized ? "❐" : "[]"}
-            </button>
-            <button onClick={onClose}>X</button>
-          </div>
-          <span className="window-title">{title}</span>
-        </div>
-        <div className="window-content">{children}</div>
-      </Rnd>
-    </div>
+    <AnimatePresence>
+      {isVisible && !isClosing && (
+        <motion.div
+          className={windowClassName}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.2 }}
+        >
+          <Rnd
+            size={size}
+            position={position}
+            onDragStop={(e, d) => {
+              setPosition({ x: d.x, y: d.y });
+              setWindowPosition(title, {
+                position: { x: d.x, y: d.y },
+                size
+              });
+            }}
+            onResizeStop={(e, direction, ref, delta, position) => {
+              const newSize = { 
+                width: ref.offsetWidth, 
+                height: ref.offsetHeight 
+              };
+              setSize(newSize);
+              setPosition(position);
+              setWindowPosition(title, {
+                position,
+                size: newSize
+              });
+            }}
+            bounds="window"
+            dragHandleClassName="drag-handle"
+          >
+            <div className="window-top-bar drag-handle">
+              <div className="window-controls">
+                <button onClick={onMinimize} className="minimize-button">_</button>
+                <button onClick={handleMaximize}>
+                  {isMaximized ? "❐" : "[]"}
+                </button>
+                <button onClick={handleClose}>X</button>
+              </div>
+              <span className="window-title">{title}</span>
+            </div>
+            <div className="window-content">{children}</div>
+          </Rnd>
+        </motion.div>
+      )}
+    </AnimatePresence>
   );
 };
 
