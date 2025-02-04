@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import WeatherDisplay from "./WeatherDisplay";
 
 export default function Topbar() {
   const [time, setTime] = useState(new Date());
@@ -14,16 +15,15 @@ export default function Topbar() {
         <span className="text-lg"></span>
         <span className="text-sm">Finder</span>
       </div>
-      <div className="flex gap-4 text-sm">
-        <span>File</span>
-        <span>Edit</span>
-        <span>View</span>
-        <span>Go</span>
-        <span>Window</span>
-        <span>Help</span>
-      </div>
-      <div className="text-sm">
-        {time.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+      <div className="flex items-center gap-4">
+        <WeatherDisplay />
+        <div className="text-sm">
+          {time.toLocaleTimeString([], { 
+            hour: "2-digit", 
+            minute: "2-digit",
+            second: "2-digit"
+          })}
+        </div>
       </div>
     </div>
   );
