@@ -13,39 +13,39 @@ const App: React.FC = () => {
       setTimeout(() => {
         setIsLoading(false);
         setFadeIn(true);
-      }, 1000);
+      }, 500);
     }, 4500);
 
     return () => clearTimeout(timer);
   }, []);
 
-  if (isLoading) {
-    return (
-      <div className={fadeOut ? 'fade-out' : ''}>
-        <Loading />
-      </div>
-    );
-  }
-
   return (
-    <div className={`relative h-screen w-screen ${fadeIn ? 'fade-in' : ''}`}>
-      <video
-        autoPlay
-        loop
-        muted
-        playsInline
-        className="absolute inset-0 w-full h-full object-cover -z-10"
-      >
-        <source src="/background.mp4" type="video/mp4" />
-        Your browser does not support the video tag.
-      </video>
+    <>
+      {isLoading && (
+        <div className={`fixed inset-0 ${fadeOut ? 'opacity-0 transition-opacity duration-1000' : ''}`}>
+          <Loading />
+        </div>
+      )}
+      
+      <div className={`relative h-screen w-screen ${fadeIn ? 'opacity-100 transition-opacity duration-1000' : 'opacity-0'}`}>
+        <video
+          autoPlay
+          loop
+          muted
+          playsInline
+          className="absolute inset-0 w-full h-full object-cover -z-10"
+        >
+          <source src="/background.mp4" type="video/mp4" />
+          Your browser does not support the video tag.
+        </video>
 
-      {/* Content Overlay */}
-      <div className="relative">
-        {/* macOS Desktop UI */}
-        <Desktop />
+        {/* Content Overlay */}
+        <div className="relative">
+          {/* macOS Desktop UI */}
+          <Desktop />
+        </div>
       </div>
-    </div>
+    </>
   );
 };
 
