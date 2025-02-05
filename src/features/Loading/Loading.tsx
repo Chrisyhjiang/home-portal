@@ -3,7 +3,7 @@ import './styles/Loading.css'; // Import the CSS file for styling
 
 const Loading: React.FC = () => {
     return (
-        <div className="container">
+        <div className="loading-container">
             <div id='loader'>
                 <div id='title' className='flex'>
                     <p className='loading-text'>LOADING</p>
@@ -16,7 +16,7 @@ const Loading: React.FC = () => {
                 <div id='warning'>
                     <p>
                         <div className='exclamation'>!</div>
-                        &nbsp;CAUTION, Do not turn off.
+                        CAUTION, Do not turn off.
                     </p>
                     <div id='line-cascates'></div>
                 </div>

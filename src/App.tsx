@@ -7,6 +7,8 @@ const App: React.FC = () => {
   const [fadeOut, setFadeOut] = useState(false);
   const [fadeIn, setFadeIn] = useState(false);
 
+  // Commenting out the timeout logic so loading screen stays visible
+  /*
   useEffect(() => {
     const timer = setTimeout(() => {
       setFadeOut(true);
@@ -18,6 +20,7 @@ const App: React.FC = () => {
 
     return () => clearTimeout(timer);
   }, []);
+  */
 
   return (
     <>
@@ -27,6 +30,7 @@ const App: React.FC = () => {
         </div>
       )}
       
+      {/* Commenting out the desktop/background part
       <div className={`relative h-screen w-screen ${fadeIn ? 'opacity-100 transition-opacity duration-1000' : 'opacity-0'}`}>
         <video
           autoPlay
@@ -39,12 +43,11 @@ const App: React.FC = () => {
           Your browser does not support the video tag.
         </video>
 
-        {/* Content Overlay */}
         <div className="relative">
-          {/* macOS Desktop UI */}
           <Desktop />
         </div>
       </div>
+      */}
     </>
   );
 };
