@@ -25,27 +25,15 @@ const PDFViewer: React.FC<PDFViewerProps> = ({ filePath, onClose }) => {
         backgroundColor: "#2e2e2e",
       }}
     >
-      <object
-        data={`${correctedPath}#toolbar=0&navpanes=0`}
-        type="application/pdf"
+      <iframe
+        src={`${correctedPath}#toolbar=0&navpanes=0`}
         style={{
           width: "100%",
           height: "100%",
           border: "none",
-          display: "block",
         }}
-      >
-        <embed
-          src={`${correctedPath}#toolbar=0&navpanes=0`}
-          type="application/pdf"
-          style={{
-            width: "100%",
-            height: "100%",
-            border: "none",
-            display: "block",
-          }}
-        />
-      </object>
+        title="PDF viewer"
+      />
     </div>
   );
 };
