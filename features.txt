@@ -1,0 +1,12 @@
+bugs:
+1. make icons bigger
+2. fix maximize logic
+
+features:
+1. embed LLM on my resume so that it can answer questions
+2. add more interactivity to my project list
+- implement show project (react-markdown)
+- implement watch project (github api calls)
+3. cybersecurity logs using nmap (scan the host that the EC2 instance is on)
+4. parallax with cyber1.png
+

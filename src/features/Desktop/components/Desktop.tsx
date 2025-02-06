@@ -48,7 +48,7 @@ const DesktopIcon: React.FC<DesktopIconProps> = ({
         x: iconState?.position.x ?? 20,
         y: iconState?.position.y ?? 20,
       }}
-      size={{ width: 80, height: 80 }}
+      size={{ width: 100, height: 100 }}
       onDragStop={handleDragStop}
       enableResizing={false}
       bounds="parent"
@@ -61,11 +61,11 @@ const DesktopIcon: React.FC<DesktopIconProps> = ({
           onOpen();
         }}
       >
-        <div className="w-14 h-14 flex items-center justify-center rounded-full bg-gray-800 shadow-md border border-gray-300 overflow-hidden">
+        <div className="w-20 h-20 flex items-center justify-center rounded-full bg-gray-800 shadow-md border border-gray-300 overflow-hidden">
           <AppIcon
             icon={app.icon}
             name={app.name}
-            className="w-12 h-12 object-cover rounded-full"
+            className="w-16 h-16 object-cover rounded-full"
           />
         </div>
         <span

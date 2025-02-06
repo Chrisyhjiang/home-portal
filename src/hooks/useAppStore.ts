@@ -104,7 +104,7 @@ export const useAppStore = create<AppState>((set, get) => ({
       app: app.name,
       position: {
         x: 20,
-        y: 20 + (index * 100)
+        y: 20 + (index * 150)
       }
     }));
     
