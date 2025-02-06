@@ -36,7 +36,7 @@ export default function Dock({ openApp }: Props) {
 
   return (
     <motion.div
-      className="fixed bottom-6 left-1/2 -translate-x-1/2 flex gap-4 px-6 py-4 bg-gray-900/70 backdrop-blur-lg rounded-2xl shadow-lg z-50"
+      className="fixed bottom-6 left-1/2 -translate-x-1/2 flex gap-4 px-8 py-6 bg-gray-900/70 backdrop-blur-lg rounded-2xl shadow-lg z-50"
       onMouseMove={(e) => {
         const { left } = e.currentTarget.getBoundingClientRect();
         mouseLeft.set(e.clientX - left);
@@ -113,16 +113,16 @@ function DockItem({ app, openApp, mouseLeft }: DockItemProps) {
         openApp();
       }}
     >
-      <div className="w-14 h-14 flex items-center justify-center rounded-full bg-gray-800 shadow-md border border-gray-300 overflow-hidden">
+      <div className="w-20 h-20 flex items-center justify-center rounded-full bg-gray-800 shadow-md border border-gray-300 overflow-hidden">
         <motion.img
           src={app.icon}
-          className="w-12 h-12 object-cover rounded-full"
+          className="w-16 h-16 object-cover rounded-full"
           alt={app.name}
         />
       </div>
 
       {/* Label Above Icon (only visible on hover) */}
-      <span className="absolute -top-8 bg-gray-900 text-white text-xs px-2 py-1 rounded-md opacity-0 group-hover:opacity-100 transition-opacity">
+      <span className="absolute -top-10 bg-gray-900 text-white text-xs px-2 py-1 rounded-md opacity-0 group-hover:opacity-100 transition-opacity">
         {app.name}
       </span>
 
