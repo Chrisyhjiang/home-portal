@@ -1,4 +1,4 @@
-import React, { useRef } from "react";
+import { useRef } from "react";
 import {
   motion,
   useMotionValue,
@@ -8,7 +8,6 @@ import {
   MotionValue,
 } from "framer-motion";
 import { useAppStore } from "@hooks/useAppStore";
-import AppIcon from "@shared/components/AppIcon/AppIcon";
 import { apps } from "@shared/constants";
 import { useWindowOpener } from "@hooks/useWindowOpener";
 
@@ -25,9 +24,9 @@ interface Props {
   openApp: (appName: string, startPosition?: { x: number; y: number }) => void;
 }
 
-export default function Dock({ openApp }: Props) {
+export default function Dock({}: Props) {
   const mouseLeft = useMotionValue(-Infinity);
-  const { openApps, minimizeApp, restoreApp } = useAppStore();
+  // const { openApps, minimizeApp, restoreApp } = useAppStore();
   const { openOrRestoreWindow } = useWindowOpener();
 
   const handleDockIconClick = (appName: string) => {
@@ -44,10 +43,10 @@ export default function Dock({ openApp }: Props) {
       onMouseLeave={() => mouseLeft.set(-Infinity)}
     >
       {apps.map((app) => {
-        const isRunning = openApps.some((a) => a.appName === app.name);
-        const isMinimized = openApps.some(
-          (a) => a.appName === app.name && a.minimized
-        );
+        // const isRunning = openApps.some((a) => a.appName === app.name);
+        // const isMinimized = openApps.some(
+        //   (a) => a.appName === app.name && a.minimized
+        // );
 
         return (
           <DockItem
@@ -63,9 +62,9 @@ export default function Dock({ openApp }: Props) {
 }
 
 interface DockItemProps {
-  app: { 
-    name: string; 
-    icon: string; 
+  app: {
+    name: string;
+    icon: string;
     link?: string;
     defaultFile?: string;
   };
@@ -77,7 +76,7 @@ function DockItem({ app, openApp, mouseLeft }: DockItemProps) {
   const ref = useRef<HTMLDivElement>(null);
   const { openApps } = useAppStore();
   const isMinimized = openApps.some(
-    a => a.appName === app.name && a.minimized
+    (a) => a.appName === app.name && a.minimized
   );
 
   const distance = useTransform(() => {
@@ -103,7 +102,9 @@ function DockItem({ app, openApp, mouseLeft }: DockItemProps) {
     <motion.div
       ref={ref}
       style={{ x: xSpring, scale: scaleSpring, y }}
-      className={`group relative flex flex-col items-center ${isMinimized ? 'minimized' : ''}`}
+      className={`group relative flex flex-col items-center ${
+        isMinimized ? "minimized" : ""
+      }`}
       onClick={() => {
         animate(y, [0, -20, 0], {
           repeat: 2,

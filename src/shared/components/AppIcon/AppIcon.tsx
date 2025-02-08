@@ -4,10 +4,9 @@ interface AppIconProps {
   name: string;
   icon: string;
   onClick?: () => void;
-  link?: string;
 }
 
-export default function AppIcon({ name, icon, onClick, link }: AppIconProps) {
+export default function AppIcon({ name, icon, onClick }: AppIconProps) {
   return (
     <div className="icon-wrapper" onClick={onClick}>
       <motion.img src={icon} className="icon-image" alt={name} />

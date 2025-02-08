@@ -19,32 +19,41 @@ interface AppState {
     startPosition?: { x: number; y: number };
     filePath?: string;
   }[];
-  openApp: (appName: string, options?: { filePath?: string; startPosition?: { x: number; y: number } }) => void;
+  openApp: (
+    appName: string,
+    options?: { filePath?: string; startPosition?: { x: number; y: number } }
+  ) => void;
   minimizeApp: (appName: string) => void;
   restoreApp: (appName: string) => void;
   closeApp: (appName: string) => void;
   setWindowPosition: (appName: string, position: WindowPosition) => void;
   completeRestore: (appName: string) => void;
   desktopIcons: DesktopIconState[];
-  updateIconPosition: (appName: string, position: { x: number; y: number }) => void;
+  updateIconPosition: (
+    appName: string,
+    position: { x: number; y: number }
+  ) => void;
   initializeDesktopIcons: () => void;
 }
 
-export const useAppStore = create<AppState>((set, get) => ({
+export const useAppStore = create<AppState>((set) => ({
   openApps: [],
   desktopIcons: [],
 
-  openApp: (appName: string, options?: { filePath?: string; startPosition?: { x: number; y: number } }) => {
+  openApp: (
+    appName: string,
+    options?: { filePath?: string; startPosition?: { x: number; y: number } }
+  ) => {
     console.log(`[${appName}] Opening app with options:`, options);
     set((state) => ({
       openApps: [
         ...state.openApps,
-        { 
-          appName, 
+        {
+          appName,
           minimized: false,
           startPosition: options?.startPosition,
-          ...options 
-        }
+          ...options,
+        },
       ],
     }));
   },
@@ -52,9 +61,7 @@ export const useAppStore = create<AppState>((set, get) => ({
   minimizeApp: (appName: string) =>
     set((state) => ({
       openApps: state.openApps.map((app) =>
-        app.appName === appName
-          ? { ...app, minimized: true }
-          : app
+        app.appName === appName ? { ...app, minimized: true } : app
       ),
     })),
 
@@ -62,9 +69,7 @@ export const useAppStore = create<AppState>((set, get) => ({
     console.log(`[${appName}] Restoring app`);
     set((state) => ({
       openApps: state.openApps.map((app) =>
-        app.appName === appName
-          ? { ...app, minimized: false }
-          : app
+        app.appName === appName ? { ...app, minimized: false } : app
       ),
     }));
   },
@@ -72,9 +77,7 @@ export const useAppStore = create<AppState>((set, get) => ({
   completeRestore: (appName: string) =>
     set((state) => ({
       openApps: state.openApps.map((app) =>
-        app.appName === appName
-          ? { ...app, minimized: false }
-          : app
+        app.appName === appName ? { ...app, minimized: false } : app
       ),
     })),
 
@@ -83,13 +86,11 @@ export const useAppStore = create<AppState>((set, get) => ({
       openApps: state.openApps.filter((app) => app.appName !== appName),
     })),
 
-  setWindowPosition: (appName, position) => 
-    set(state => ({
-      openApps: state.openApps.map(app => 
-        app.appName === appName 
-          ? { ...app, lastPosition: position }
-          : app
-      )
+  setWindowPosition: (appName, position) =>
+    set((state) => ({
+      openApps: state.openApps.map((app) =>
+        app.appName === appName ? { ...app, lastPosition: position } : app
+      ),
     })),
 
   updateIconPosition: (appName, position) =>
@@ -104,10 +105,10 @@ export const useAppStore = create<AppState>((set, get) => ({
       app: app.name,
       position: {
         x: 20,
-        y: 20 + (index * 150)
-      }
+        y: 20 + index * 150,
+      },
     }));
-    
+
     set({ desktopIcons: initialIcons });
   },
 }));

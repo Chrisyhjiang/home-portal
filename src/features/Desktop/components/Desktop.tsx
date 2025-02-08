@@ -8,7 +8,6 @@ import PDFViewer from "@features/PDFViewer/components/PDFViewer";
 import { useRef, useEffect } from "react";
 import { apps } from "@shared/constants";
 import React from "react";
-import { motion, useMotionValue, animate } from "framer-motion";
 import { PanInfo } from "framer-motion";
 import AppIcon from "@shared/components/AppIcon/AppIcon";
 import { Rnd } from "react-rnd";
@@ -39,7 +38,12 @@ const DesktopIcon: React.FC<DesktopIconProps> = ({
   const handleDragStop = (e: any, data: { x: number; y: number }) => {
     const newPosition = { x: data.x, y: data.y };
     updateIconPosition(app.name, newPosition);
-    onDragEnd(e, { point: newPosition });
+    onDragEnd(e, {
+      point: newPosition,
+      delta: { x: 0, y: 0 },
+      offset: { x: data.x, y: data.y },
+      velocity: { x: 0, y: 0 },
+    });
   };
 
   return (
@@ -62,11 +66,7 @@ const DesktopIcon: React.FC<DesktopIconProps> = ({
         }}
       >
         <div className="w-20 h-20 flex items-center justify-center rounded-full bg-gray-800 shadow-md border border-gray-300 overflow-hidden">
-          <AppIcon
-            icon={app.icon}
-            name={app.name}
-            className="w-16 h-16 object-cover rounded-full"
-          />
+          <AppIcon icon={app.icon} name={app.name} />
         </div>
         <span
           className="text-white text-xs px-2 py-1 rounded-md opacity-0 group-hover:opacity-100 transition-opacity"
@@ -140,42 +140,28 @@ export default function Desktop() {
     }
   };
 
-  // Update the desktop icon click handler
-  const handleDesktopIconClick = (app: { name: string; icon: string }) => {
-    console.log("Desktop icon clicked:", app.name);
-    openOrRestoreWindow(app.name);
-  };
-
-  const handleGitHubClick = () => {
-    window.open(
-      "https://github.com/Chrisyhjiang",
-      "_blank",
-      "noopener,noreferrer"
-    );
-  };
-
   return (
     <div
       className="h-screen w-screen relative flex flex-col overflow-hidden pt-12 pb-20"
-      onClick={(e) => console.log("Desktop clicked")}
+      onClick={(_) => console.log("Desktop clicked")}
     >
       <Topbar />
 
       {/* Desktop Icons Layer */}
       <div
         className="absolute inset-0 pt-12 z-10"
-        onClick={(e) => console.log("Icons container clicked")}
+        onClick={(_) => console.log("Icons container clicked")}
       >
         <div
           className="relative w-full h-full"
-          onClick={(e) => console.log("Inner icons container clicked")}
+          onClick={(_) => console.log("Inner icons container clicked")}
         >
           {apps.map((app) => (
             <DesktopIcon
               key={app.name}
               app={app}
               onOpen={() => openOrRestoreWindow(app.name)}
-              onDragEnd={(event, info) =>
+              onDragEnd={(_, info) =>
                 updateIconPosition(app.name, {
                   x: info.point.x,
                   y: info.point.y,

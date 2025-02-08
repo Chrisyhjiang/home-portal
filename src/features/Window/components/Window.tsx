@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Rnd } from "react-rnd";
-import { motion, animate, AnimatePresence } from "framer-motion";
-import { useAppStore } from "@hooks/useAppStore";
+import { motion, AnimatePresence } from "framer-motion";
 import "../styles/Window.css";
 import { useWindowManager } from "../../../hooks/useWindowManager";
 
@@ -47,11 +46,10 @@ const Window: React.FC<WindowProps> = ({
   });
   const [position, setPosition] = useState(startPosition);
   const [isMaximized, setIsMaximized] = useState(isMaximizedAlready);
-  const { openApps, setWindowPosition } = useAppStore();
   const windowClassName = `window-rnd-${title
     .toLowerCase()
     .replace(/\s+/g, "-")}`;
-  const [isAnimating, setIsAnimating] = useState(false);
+  const [isAnimating] = useState(false);
   const [preMaximizedState, setPreMaximizedState] = useState<{
     position: { x: number; y: number };
     size: { width: number; height: number };
@@ -138,21 +136,6 @@ const Window: React.FC<WindowProps> = ({
     setIsMaximized(!isMaximized);
   };
 
-  const handleDrag = (e, d) => {
-    const { innerWidth, innerHeight } = window;
-    const threshold = 20;
-
-    if (d.x < threshold) {
-      // Snap to left half
-      setSize({ width: innerWidth / 2, height: innerHeight });
-      setPosition({ x: 0, y: 0 });
-    } else if (d.x > innerWidth - threshold) {
-      // Snap to right half
-      setSize({ width: innerWidth / 2, height: innerHeight });
-      setPosition({ x: innerWidth / 2, y: 0 });
-    }
-  };
-
   const handleClose = () => {
     setIsClosing(true);
     // Wait for animation to complete before calling onClose
@@ -183,10 +166,10 @@ const Window: React.FC<WindowProps> = ({
           <Rnd
             size={size}
             position={position}
-            onDragStop={(e, d) => {
+            onDragStop={(_, d) => {
               setPosition({ x: d.x, y: d.y });
             }}
-            onResizeStop={(e, direction, ref, delta, position) => {
+            onResizeStop={(_, __, ref, ___, position) => {
               setSize({
                 width: ref.offsetWidth,
                 height: ref.offsetHeight,

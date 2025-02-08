@@ -2,7 +2,7 @@ import { useAppStore } from "./useAppStore";
 import { apps } from "@shared/constants";
 
 export const useWindowOpener = () => {
-  const { openApps, openApp, restoreApp, minimizeApp } = useAppStore();
+  const { openApps, openApp, restoreApp } = useAppStore();
 
   const openOrRestoreWindow = (
     appName: string,

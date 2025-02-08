@@ -6,7 +6,7 @@ export default function Terminal() {
   const [input, setInput] = useState("");
   const { openApp } = useAppStore();
 
-  const commands = {
+  const commands: Record<string, () => string> = {
     ls: () => "Resume.pdf  Project1  Project2",
     clear: () => {
       setOutput([]);

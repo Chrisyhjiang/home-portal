@@ -1,6 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from "react";
 import Desktop from "./features/Desktop/components/Desktop";
-import Loading from './features/Loading/Loading';
+import Loading from "./features/Loading/Loading";
+import Background from "./features/Background/components/Background";
 
 const App: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
@@ -22,23 +23,21 @@ const App: React.FC = () => {
   return (
     <>
       {isLoading && (
-        <div className={`fixed inset-0 ${fadeOut ? 'opacity-0 transition-opacity duration-1000' : ''}`}>
+        <div
+          className={`fixed inset-0 ${
+            fadeOut ? "opacity-0 transition-opacity duration-1000" : ""
+          }`}
+        >
           <Loading />
         </div>
       )}
-      
-      <div className={`relative h-screen w-screen ${fadeIn ? 'opacity-100 transition-opacity duration-1000' : 'opacity-0'}`}>
-        <video
-          autoPlay
-          loop
-          muted
-          playsInline
-          className="absolute inset-0 w-full h-full object-cover -z-10"
-        >
-          <source src="/background.mp4" type="video/mp4" />
-          Your browser does not support the video tag.
-        </video>
 
+      <div
+        className={`relative h-screen w-screen ${
+          fadeIn ? "opacity-100 transition-opacity duration-1000" : "opacity-0"
+        }`}
+      >
+        <Background />
         <div className="relative">
           <Desktop />
         </div>
