@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, lazy, Suspense } from "react";
 import {
   BrowserRouter as Router,
   Routes,
@@ -8,10 +8,14 @@ import {
 } from "react-router-dom";
 import Desktop from "./features/Desktop/components/Desktop";
 import Loading from "./features/Loading/Loading";
-import Background from "./features/Background/components/Background";
 import Portfolio from "./features/Portfolio/containers/Main/Main";
 import { ThemeProvider } from "./context/ThemeContext";
 import "./App.css";
+
+// Lazy load the Background component
+const Background = lazy(
+  () => import("./features/Background/components/Background")
+);
 
 // Separate component for the Desktop route to handle loading state
 const DesktopRoute: React.FC = () => {
@@ -75,23 +79,22 @@ const App: React.FC = () => {
   return (
     <ThemeProvider>
       <Router>
-        <Routes>
-          {/* macOS Clone Route */}
-          <Route path="/desktop" element={<DesktopRoute />} />
-
-          {/* Portfolio as landing page */}
-          <Route
-            path="/"
-            element={
-              <div className="portfolio-container">
-                <Portfolio />
-              </div>
-            }
-          />
-
-          {/* Redirect all other routes to landing page */}
-          <Route path="*" element={<Navigate to="/" replace />} />
-        </Routes>
+        <Suspense fallback={<Loading />}>
+          <Background />
+          <Routes>
+            <Route path="/desktop" element={<DesktopRoute />} />
+            <Route
+              path="/"
+              element={
+                <div className="portfolio-container">
+                  <Portfolio />
+                </div>
+              }
+            />
+            {/* Redirect all other routes to root */}
+            <Route path="*" element={<Navigate to="/" replace />} />
+          </Routes>
+        </Suspense>
       </Router>
     </ThemeProvider>
   );

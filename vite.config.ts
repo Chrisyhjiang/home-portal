@@ -12,4 +12,15 @@ export default defineConfig({
       "@shared": path.resolve(__dirname, "./src/shared"),
     },
   },
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          vendor: ["pixi.js"],
+          react: ["react", "react-dom"],
+        },
+      },
+    },
+    chunkSizeWarningLimit: 1000,
+  },
 });

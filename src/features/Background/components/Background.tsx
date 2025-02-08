@@ -30,7 +30,7 @@ const Background: React.FC = () => {
     () => WALLPAPERS[Math.floor(Math.random() * WALLPAPERS.length)]
   );
 
-  const changeWallpaper = async (app: PIXI.Application) => {
+  const changeWallpaper = async () => {
     if (!backgroundRef.current) return;
 
     // Fade out
@@ -209,7 +209,7 @@ const Background: React.FC = () => {
 
         // Set up wallpaper rotation interval
         const wallpaperInterval = setInterval(() => {
-          changeWallpaper(app);
+          changeWallpaper();
         }, 10000);
 
         const onMouseMove = (e: MouseEvent) => {

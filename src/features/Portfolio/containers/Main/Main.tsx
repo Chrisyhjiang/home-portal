@@ -93,7 +93,7 @@ const Main: React.FC = () => {
             viewport={{ once: true, margin: "-100px" }}
             transition={{ duration: 0.8 }}
           >
-            <Experience theme={theme} colors={colors} />
+            <Experience colors={colors} />
           </motion.section>
           <motion.section
             id="contact"
