@@ -1,9 +1,19 @@
 
 File: ./src/App.tsx
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from "react";
+import {
+  BrowserRouter as Router,
+  Routes,
+  Route,
+  Navigate,
+} from "react-router-dom";
 import Desktop from "./features/Desktop/components/Desktop";
-import Loading from './features/Loading/Loading';
+import Loading from "./features/Loading/Loading";
+import Background from "./features/Background/components/Background";
+import Portfolio from "./features/Portfolio/containers/Main";
+import { ThemeProvider } from "./context/ThemeContext";
+import "./App.css";
 
 const App: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
@@ -23,30 +33,56 @@ const App: React.FC = () => {
   }, []);
 
   return (
-    <>
-      {isLoading && (
-        <div className={`fixed inset-0 ${fadeOut ? 'opacity-0 transition-opacity duration-1000' : ''}`}>
-          <Loading />
-        </div>
-      )}
-      
-      <div className={`relative h-screen w-screen ${fadeIn ? 'opacity-100 transition-opacity duration-1000' : 'opacity-0'}`}>
-        <video
-          autoPlay
-          loop
-          muted
-          playsInline
-          className="absolute inset-0 w-full h-full object-cover -z-10"
-        >
-          <source src="/background.mp4" type="video/mp4" />
-          Your browser does not support the video tag.
-        </video>
+    <ThemeProvider>
+      <Router>
+        <Routes>
+          {/* Portfolio Route */}
+          <Route
+            path="/portfolio"
+            element={
+              <div className="portfolio-container">
+                <Portfolio />
+              </div>
+            }
+          />
 
-        <div className="relative">
-          <Desktop />
-        </div>
-      </div>
-    </>
+          {/* macOS Clone Route */}
+          <Route
+            path="/desktop"
+            element={
+              <>
+                {isLoading && (
+                  <div
+                    className={`fixed inset-0 ${
+                      fadeOut
+                        ? "opacity-0 transition-opacity duration-1000"
+                        : ""
+                    }`}
+                  >
+                    <Loading />
+                  </div>
+                )}
+                <div
+                  className={`relative h-screen w-screen ${
+                    fadeIn
+                      ? "opacity-100 transition-opacity duration-1000"
+                      : "opacity-0"
+                  }`}
+                >
+                  <Background />
+                  <div className="relative">
+                    <Desktop />
+                  </div>
+                </div>
+              </>
+            }
+          />
+
+          {/* Default Route - Redirect to Portfolio */}
+          <Route path="/" element={<Navigate to="/portfolio" replace />} />
+        </Routes>
+      </Router>
+    </ThemeProvider>
   );
 };
 
@@ -62,6 +98,373 @@ createRoot(document.getElementById("root")!).render(
   // 🚨 Remove StrictMode to avoid warnings
   <App />
 );
+
+File: ./src/context/ThemeContext.tsx
+
+import React, { createContext, useContext, useState, useEffect } from "react";
+
+type Theme = "light" | "dark";
+
+interface ThemeContextType {
+  theme: Theme;
+  toggleTheme: () => void;
+  colors: {
+    background: string;
+    text: string;
+    primary: string;
+    secondary: string;
+    accent: string;
+    surface: string;
+    border: string;
+  };
+}
+
+const lightColors = {
+  background: "#ffffff",
+  text: "#2d3748",
+  primary: "#3182ce",
+  secondary: "#4a5568",
+  accent: "#ed64a6",
+  surface: "#f7fafc",
+  border: "#e2e8f0",
+};
+
+const darkColors = {
+  background: "#1a202c",
+  text: "#f7fafc",
+  primary: "#63b3ed",
+  secondary: "#a0aec0",
+  accent: "#f687b3",
+  surface: "#2d3748",
+  border: "#4a5568",
+};
+
+const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
+
+export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({
+  children,
+}) => {
+  const [theme, setTheme] = useState<Theme>(() => {
+    const savedTheme = localStorage.getItem("theme");
+    return (savedTheme as Theme) || "light";
+  });
+
+  const colors = theme === "light" ? lightColors : darkColors;
+
+  useEffect(() => {
+    localStorage.setItem("theme", theme);
+    document.documentElement.setAttribute("data-theme", theme);
+  }, [theme]);
+
+  const toggleTheme = () => {
+    setTheme((prev) => (prev === "light" ? "dark" : "light"));
+  };
+
+  return (
+    <ThemeContext.Provider value={{ theme, toggleTheme, colors }}>
+      {children}
+    </ThemeContext.Provider>
+  );
+};
+
+export const useTheme = () => {
+  const context = useContext(ThemeContext);
+  if (context === undefined) {
+    throw new Error("useTheme must be used within a ThemeProvider");
+  }
+  return context;
+};
+
+File: ./src/features/Background/components/Background.tsx
+
+import React, { useEffect, useRef, useState } from "react";
+import * as PIXI from "pixi.js";
+import { DisplacementFilter, Filter, Sprite } from "pixi.js";
+
+// Available wallpapers and their depth maps
+const WALLPAPERS = [
+  { image: "anime", ext: "png" },
+  { image: "astro", ext: "jpg" },
+  { image: "car", ext: "jpg" },
+  { image: "castle", ext: "jpg" },
+  { image: "cave", ext: "jpg" },
+  { image: "cyber", ext: "png" },
+  { image: "fantasy", ext: "jpg" },
+  { image: "fantasy2", ext: "jpg" },
+  { image: "northernlights", ext: "jpg" },
+  { image: "onepiece", ext: "jpg" },
+  { image: "sunrise", ext: "jpg" },
+  { image: "waterfall", ext: "jpg" },
+];
+
+const Background: React.FC = () => {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const appRef = useRef<PIXI.Application | null>(null);
+  const backgroundRef = useRef<PIXI.Sprite | null>(null);
+  const displacementFilterRef = useRef<DisplacementFilter | null>(null);
+  // Add refs for smooth movement
+  const targetValues = useRef({ x: 0, y: 0 });
+  const currentValues = useRef({ x: 0, y: 0 });
+  const [currentWallpaper, setCurrentWallpaper] = useState(
+    () => WALLPAPERS[Math.floor(Math.random() * WALLPAPERS.length)]
+  );
+
+  const changeWallpaper = async (app: PIXI.Application) => {
+    if (!backgroundRef.current) return;
+
+    // Fade out
+    const fadeOutTween = { alpha: 1 };
+    const fadeOutDuration = 300; // 0.3 seconds
+    const startTime = Date.now();
+
+    const fadeOut = () => {
+      const elapsed = Date.now() - startTime;
+      const progress = Math.min(elapsed / fadeOutDuration, 1);
+      fadeOutTween.alpha = 1 - progress;
+
+      if (backgroundRef.current) {
+        backgroundRef.current.alpha = fadeOutTween.alpha;
+      }
+
+      if (progress < 1) {
+        requestAnimationFrame(fadeOut);
+      } else {
+        // After fade out, load new wallpaper
+        loadNewWallpaper();
+      }
+    };
+
+    fadeOut();
+
+    const loadNewWallpaper = async () => {
+      // Choose new random wallpaper (different from current)
+      let newWallpaper;
+      do {
+        newWallpaper =
+          WALLPAPERS[Math.floor(Math.random() * WALLPAPERS.length)];
+      } while (newWallpaper.image === currentWallpaper.image);
+
+      try {
+        const [mainTexture, depthTexture] = await Promise.all([
+          PIXI.Assets.load(
+            `/background/image/${newWallpaper.image}.${newWallpaper.ext}`
+          ),
+          PIXI.Assets.load(`/background/depthmap/${newWallpaper.image}.png`),
+        ]);
+
+        if (backgroundRef.current) {
+          backgroundRef.current.texture = mainTexture;
+          // Apply dark tint to new background
+          backgroundRef.current.tint = 0xcccccc;
+          backgroundRef.current.alpha = 0.8;
+          // Create a new displacement filter with the new depth map
+          const newDisplacementFilter = new DisplacementFilter(
+            new PIXI.Sprite(depthTexture)
+          );
+          newDisplacementFilter.scale.x = 15;
+          newDisplacementFilter.scale.y = 15;
+          backgroundRef.current.filters = [newDisplacementFilter];
+          displacementFilterRef.current = newDisplacementFilter;
+        }
+
+        setCurrentWallpaper(newWallpaper);
+
+        // Fade in
+        const fadeInTween = { alpha: 0 };
+        const fadeInDuration = 300; // 0.3 seconds
+        const fadeInStart = Date.now();
+
+        const fadeIn = () => {
+          const elapsed = Date.now() - fadeInStart;
+          const progress = Math.min(elapsed / fadeInDuration, 1);
+          fadeInTween.alpha = progress;
+
+          if (backgroundRef.current) {
+            backgroundRef.current.alpha = fadeInTween.alpha;
+          }
+
+          if (progress < 1) {
+            requestAnimationFrame(fadeIn);
+          }
+        };
+
+        fadeIn();
+      } catch (error) {
+        console.error("Error loading new wallpaper:", error);
+      }
+    };
+  };
+
+  useEffect(() => {
+    if (!containerRef.current) return;
+
+    console.log("Initializing Background component");
+
+    const canvas = document.createElement("canvas");
+    canvas.style.width = "100%";
+    canvas.style.height = "100%";
+    containerRef.current.appendChild(canvas);
+
+    const app = new PIXI.Application();
+    app.init({
+      width: window.innerWidth,
+      height: window.innerHeight,
+      backgroundColor: 0x000000,
+      resizeTo: window,
+      antialias: true,
+      view: canvas,
+    });
+
+    appRef.current = app;
+    console.log("PIXI Application created");
+
+    const setup = async () => {
+      try {
+        console.log("Loading textures...");
+        const [mainTexture, depthTexture] = await Promise.all([
+          PIXI.Assets.load(
+            `/background/image/${currentWallpaper.image}.${currentWallpaper.ext}`
+          ),
+          PIXI.Assets.load(
+            `/background/depthmap/${currentWallpaper.image}.png`
+          ),
+        ]);
+
+        console.log("Textures loaded successfully");
+
+        const background = new PIXI.Sprite(mainTexture);
+        const depthMap = new PIXI.Sprite(depthTexture);
+        backgroundRef.current = background;
+
+        console.log("Sprites created");
+
+        // Apply dark tint to background
+        background.tint = 0xcccccc; // Lighter gray tint (80% of white)
+        background.alpha = 0.8; // 80% opacity
+
+        background.width = window.innerWidth;
+        background.height = window.innerHeight;
+        // Set pivot point to center for rotation
+        background.anchor.set(0.5);
+        // Adjust position to compensate for centered anchor
+        background.position.set(window.innerWidth / 2, window.innerHeight / 2);
+        app.stage.addChild(background);
+
+        depthMap.width = window.innerWidth;
+        depthMap.height = window.innerHeight;
+        // Also center the depth map
+        depthMap.anchor.set(0.5);
+        depthMap.position.set(window.innerWidth / 2, window.innerHeight / 2);
+        depthMap.visible = false;
+        app.stage.addChild(depthMap);
+
+        console.log("Sprites added to stage");
+
+        const displacementFilter = new DisplacementFilter(depthMap);
+        displacementFilter.scale.x = 15;
+        displacementFilter.scale.y = 15;
+        background.filters = [displacementFilter];
+        displacementFilterRef.current = displacementFilter;
+
+        console.log("Displacement filter set up");
+
+        // Set up animation loop for smooth transitions
+        const animate = () => {
+          if (backgroundRef.current && displacementFilterRef.current) {
+            // Smooth displacement movement
+            currentValues.current.x +=
+              (targetValues.current.x - currentValues.current.x) * 0.1;
+            currentValues.current.y +=
+              (targetValues.current.y - currentValues.current.y) * 0.1;
+
+            // Apply values
+            displacementFilterRef.current.scale.x = currentValues.current.x;
+            displacementFilterRef.current.scale.y = currentValues.current.y;
+          }
+          requestAnimationFrame(animate);
+        };
+
+        animate();
+
+        // Set up wallpaper rotation interval
+        const wallpaperInterval = setInterval(() => {
+          changeWallpaper(app);
+        }, 10000);
+
+        const onMouseMove = (e: MouseEvent) => {
+          if (!displacementFilterRef.current) return;
+
+          const { clientX, clientY } = e;
+          const centerX = window.innerWidth / 2;
+          const centerY = window.innerHeight / 2;
+
+          // Calculate normalized position (-1 to 1)
+          const normalizedX = (clientX - centerX) / (window.innerWidth / 2);
+          const normalizedY = (clientY - centerY) / (window.innerHeight / 2);
+
+          // Update target values with displacement only
+          targetValues.current.x = normalizedX * 20;
+          targetValues.current.y = normalizedY * 20;
+        };
+
+        window.addEventListener("mousemove", onMouseMove);
+
+        const onResize = () => {
+          if (!appRef.current) return;
+          background.width = window.innerWidth;
+          background.height = window.innerHeight;
+          // Update position on resize
+          background.position.set(
+            window.innerWidth / 2,
+            window.innerHeight / 2
+          );
+
+          depthMap.width = window.innerWidth;
+          depthMap.height = window.innerHeight;
+          depthMap.position.set(window.innerWidth / 2, window.innerHeight / 2);
+        };
+
+        window.addEventListener("resize", onResize);
+
+        return () => {
+          window.removeEventListener("mousemove", onMouseMove);
+          window.removeEventListener("resize", onResize);
+          clearInterval(wallpaperInterval);
+        };
+      } catch (error) {
+        console.error("Error in setup:", error);
+        if (error instanceof Error) {
+          console.error("Error message:", error.message);
+          console.error("Error stack:", error.stack);
+        }
+        throw error;
+      }
+    };
+
+    let cleanup: (() => void) | undefined;
+    setup()
+      .then((cleanupFn) => {
+        cleanup = cleanupFn;
+        console.log("Setup completed successfully");
+      })
+      .catch((error) => {
+        console.error("Failed to complete setup:", error);
+      });
+
+    return () => {
+      cleanup?.();
+      if (appRef.current) {
+        console.log("Destroying PIXI application");
+        appRef.current.destroy(true);
+      }
+      canvas.remove();
+    };
+  }, []);
+
+  return <div ref={containerRef} className="fixed inset-0 -z-10" />;
+};
+
+export default Background;
 
 File: ./src/features/Loading/Loading.tsx
 
@@ -94,6 +497,16 @@ const Loading: React.FC = () => {
 
 export default Loading;
 
+File: ./src/features/PDFViewer/components/PDFViewer.test.tsx
+
+import { render } from "@testing-library/react";
+import PDFViewer from "./PDFViewer";
+
+test("renders PDFViewer component", () => {
+  // Providing the required 'onClose' prop as a dummy function
+  render(<PDFViewer onClose={() => {}} />);
+});
+
 File: ./src/features/PDFViewer/components/PDFViewer.tsx
 
 import React from "react";
@@ -103,7 +516,7 @@ interface PDFViewerProps {
   onClose: () => void;
 }
 
-const PDFViewer: React.FC<PDFViewerProps> = ({ filePath, onClose }) => {
+const PDFViewer: React.FC<PDFViewerProps> = ({ filePath }) => {
   if (!filePath || !filePath.endsWith(".pdf")) {
     return (
       <div className="p-4 text-white bg-red-500">No valid PDF selected.</div>
@@ -124,15 +537,14 @@ const PDFViewer: React.FC<PDFViewerProps> = ({ filePath, onClose }) => {
       }}
     >
       <iframe
-  src={`${correctedPath}#toolbar=1&navpanes=0&scrollbar=1`}
-  style={{
-    width: "100%",
-    height: "100%",
-    border: "none",
-  }}
-  title="PDF viewer"
-/>
-
+        src={`${correctedPath}#toolbar=1&navpanes=0&scrollbar=1`}
+        style={{
+          width: "100%",
+          height: "100%",
+          border: "none",
+        }}
+        title="PDF viewer"
+      />
     </div>
   );
 };
@@ -149,7 +561,7 @@ export default function Terminal() {
   const [input, setInput] = useState("");
   const { openApp } = useAppStore();
 
-  const commands = {
+  const commands: Record<string, () => string> = {
     ls: () => "Resume.pdf  Project1  Project2",
     clear: () => {
       setOutput([]);
@@ -200,6 +612,16 @@ export default function Terminal() {
   );
 }
 
+File: ./src/features/Terminal/components/Terminal.test.tsx
+
+import { render } from "@testing-library/react";
+import Terminal from "./Terminal";
+
+test("renders Terminal component", () => {
+  render(<Terminal />);
+  // Add more specific tests here
+});
+
 File: ./src/features/Desktop/components/Desktop.tsx
 
 import { useAppStore } from "@hooks/useAppStore";
@@ -212,12 +634,12 @@ import PDFViewer from "@features/PDFViewer/components/PDFViewer";
 import { useRef, useEffect } from "react";
 import { apps } from "@shared/constants";
 import React from "react";
-import { motion, useMotionValue, animate } from "framer-motion";
 import { PanInfo } from "framer-motion";
 import AppIcon from "@shared/components/AppIcon/AppIcon";
 import { Rnd } from "react-rnd";
 import { useWindowOpener } from "@hooks/useWindowOpener";
 import { useWindowManager } from "@hooks/useWindowManager";
+import Readme from "@/features/Readme/components/Readme";
 
 interface DesktopIconProps {
   app: {
@@ -243,7 +665,12 @@ const DesktopIcon: React.FC<DesktopIconProps> = ({
   const handleDragStop = (e: any, data: { x: number; y: number }) => {
     const newPosition = { x: data.x, y: data.y };
     updateIconPosition(app.name, newPosition);
-    onDragEnd(e, { point: newPosition });
+    onDragEnd(e, {
+      point: newPosition,
+      delta: { x: 0, y: 0 },
+      offset: { x: data.x, y: data.y },
+      velocity: { x: 0, y: 0 },
+    });
   };
 
   return (
@@ -266,11 +693,7 @@ const DesktopIcon: React.FC<DesktopIconProps> = ({
         }}
       >
         <div className="w-20 h-20 flex items-center justify-center rounded-full bg-gray-800 shadow-md border border-gray-300 overflow-hidden">
-          <AppIcon
-            icon={app.icon}
-            name={app.name}
-            className="w-16 h-16 object-cover rounded-full"
-          />
+          <AppIcon icon={app.icon} name={app.name} />
         </div>
         <span
           className="text-white text-xs px-2 py-1 rounded-md opacity-0 group-hover:opacity-100 transition-opacity"
@@ -344,42 +767,28 @@ export default function Desktop() {
     }
   };
 
-  // Update the desktop icon click handler
-  const handleDesktopIconClick = (app: { name: string; icon: string }) => {
-    console.log("Desktop icon clicked:", app.name);
-    openOrRestoreWindow(app.name);
-  };
-
-  const handleGitHubClick = () => {
-    window.open(
-      "https://github.com/Chrisyhjiang",
-      "_blank",
-      "noopener,noreferrer"
-    );
-  };
-
   return (
     <div
       className="h-screen w-screen relative flex flex-col overflow-hidden pt-12 pb-20"
-      onClick={(e) => console.log("Desktop clicked")}
+      onClick={(_) => console.log("Desktop clicked")}
     >
       <Topbar />
 
       {/* Desktop Icons Layer */}
       <div
         className="absolute inset-0 pt-12 z-10"
-        onClick={(e) => console.log("Icons container clicked")}
+        onClick={(_) => console.log("Icons container clicked")}
       >
         <div
           className="relative w-full h-full"
-          onClick={(e) => console.log("Inner icons container clicked")}
+          onClick={(_) => console.log("Inner icons container clicked")}
         >
           {apps.map((app) => (
             <DesktopIcon
               key={app.name}
               app={app}
               onOpen={() => openOrRestoreWindow(app.name)}
-              onDragEnd={(event, info) =>
+              onDragEnd={(_, info) =>
                 updateIconPosition(app.name, {
                   x: info.point.x,
                   y: info.point.y,
@@ -431,6 +840,7 @@ export default function Desktop() {
                       onClose={() => closeApp(appName)}
                     />
                   )}
+                  {appName === "Readme" && <Readme />}
                 </Window>
               </div>
             );
@@ -446,12 +856,72 @@ export default function Desktop() {
   );
 }
 
+File: ./src/features/Desktop/components/Desktop.test.tsx
+
+import { render } from "@testing-library/react";
+import Desktop from "./Desktop";
+
+test("renders Desktop component", () => {
+  render(<Desktop />);
+  // Add more specific tests here
+});
+
+File: ./src/features/Readme/components/Readme.tsx
+
+import React from "react";
+import "../styles/styles.css";
+
+const Readme: React.FC = () => {
+  return (
+    <div className="notes-container">
+      <h1 className="notes-title">Welcome!</h1>
+      <div className="notes-content">
+        Howdy! This is my interactive mac-os clone personal portfolio, feel free
+        to do whatever your heart desires. You can: • Open the Terminal • Check
+        out my Resume • Visit my GitHub • Explore the Finder Have fun exploring!
+        🚀
+      </div>
+    </div>
+  );
+};
+
+export default Readme;
+
+File: ./src/features/Window/components/Window.test.tsx
+
+import { render } from "@testing-library/react";
+import Window from "./Window";
+import Finder from "../../Finder/components/Finder";
+import Dock from "../../Dock/components/Dock";
+
+test("renders Window component", () => {
+  render(
+    <Window
+      title="Test Window"
+      isVisible={true}
+      onClose={() => {}}
+      onMinimize={() => {}}
+      windowId="test-window"
+    >
+      <div>Window Content</div>
+    </Window>
+  );
+  // Add more specific tests here
+});
+
+test("renders Finder component", () => {
+  render(<Finder />);
+});
+
+test("renders Dock component", () => {
+  render(<Dock openApp={() => {}} />);
+});
+
 File: ./src/features/Window/components/Window.tsx
 
 import React, { useState, useEffect } from "react";
 import { Rnd } from "react-rnd";
-import { motion, animate, AnimatePresence } from "framer-motion";
-import { useAppStore } from "@hooks/useAppStore";
+import { motion, AnimatePresence } from "framer-motion";
 import "../styles/Window.css";
 import { useWindowManager } from "../../../hooks/useWindowManager";
 
@@ -497,11 +967,10 @@ const Window: React.FC<WindowProps> = ({
   });
   const [position, setPosition] = useState(startPosition);
   const [isMaximized, setIsMaximized] = useState(isMaximizedAlready);
-  const { openApps, setWindowPosition } = useAppStore();
   const windowClassName = `window-rnd-${title
     .toLowerCase()
     .replace(/\s+/g, "-")}`;
-  const [isAnimating, setIsAnimating] = useState(false);
+  const [isAnimating] = useState(false);
   const [preMaximizedState, setPreMaximizedState] = useState<{
     position: { x: number; y: number };
     size: { width: number; height: number };
@@ -588,21 +1057,6 @@ const Window: React.FC<WindowProps> = ({
     setIsMaximized(!isMaximized);
   };
 
-  const handleDrag = (e, d) => {
-    const { innerWidth, innerHeight } = window;
-    const threshold = 20;
-
-    if (d.x < threshold) {
-      // Snap to left half
-      setSize({ width: innerWidth / 2, height: innerHeight });
-      setPosition({ x: 0, y: 0 });
-    } else if (d.x > innerWidth - threshold) {
-      // Snap to right half
-      setSize({ width: innerWidth / 2, height: innerHeight });
-      setPosition({ x: innerWidth / 2, y: 0 });
-    }
-  };
-
   const handleClose = () => {
     setIsClosing(true);
     // Wait for animation to complete before calling onClose
@@ -633,19 +1087,24 @@ const Window: React.FC<WindowProps> = ({
           <Rnd
             size={size}
             position={position}
-            onDragStop={(e, d) => {
-              setPosition({ x: d.x, y: d.y });
+            onDragStop={(_, d) => {
+              // Ensure the window doesn't go above the topbar
+              const y = Math.max(5, d.y);
+              setPosition({ x: d.x, y });
             }}
-            onResizeStop={(e, direction, ref, delta, position) => {
+            bounds="window"
+            onResizeStop={(_, __, ref, ___, position) => {
               setSize({
                 width: ref.offsetWidth,
                 height: ref.offsetHeight,
               });
-              setPosition(position);
+              // Ensure position stays within bounds after resize
+              const y = Math.max(5, position.y);
+              setPosition({ x: position.x, y });
             }}
+            dragHandleClassName="window-top-bar"
             minWidth={300}
             minHeight={200}
-            dragHandleClassName="window-top-bar"
             disableDragging={false}
             enableResizing={true}
             className={`${windowClassName} ${windowId}`}
@@ -728,6 +1187,715 @@ export default function Finder() {
     </div>
   );
 }
+
+File: ./src/features/Finder/components/Finder.test.tsx
+
+import { render } from "@testing-library/react";
+import Finder from "./Finder";
+
+test("renders Finder component", () => {
+  render(<Finder />);
+  // Add more specific tests here
+});
+
+File: ./src/features/Portfolio/portfolio.ts
+
+export const profile = {
+  name: "Christopher Jiang",
+  role: "Software Developer",
+  description: "Computer Science Student at the University of Waterloo.",
+};
+
+export const social = [
+  { name: "GitHub", link: "https://github.com/Chrisyhjiang" },
+  {
+    name: "LinkedIn",
+    link: "https://www.linkedin.com/in/christopher-jiang-3b8a30223/",
+  },
+];
+
+export const brand = "CJ";
+
+export const greeting = {
+  title: "Hi there 👋",
+  logo_name: "christopher.j()",
+  full_name: "Christopher Jiang",
+  subTitle: "Full Stack Developer, Open Source Enthusiast 🔥. Always learning.",
+};
+
+export const work = [
+  // Add your projects here
+];
+
+export const stack = [
+  {
+    name: "Front End",
+    items: [
+      { name: "HTML" },
+      { name: "CSS" },
+      { name: "Javascript" },
+      { name: "Typescript" },
+      { name: "React" },
+      { name: "Angular" },
+    ],
+  },
+  {
+    name: "Back End",
+    items: [
+      { name: "NodeJS" },
+      { name: "MongoDB" },
+      { name: "MySQL" },
+      { name: "Python" },
+      { name: "Kotlin" },
+      { name: "Golang" },
+      { name: "Java" },
+    ],
+  },
+  {
+    name: "Tools",
+    items: [
+      { name: "Git" },
+      { name: "Docker" },
+      { name: "Kubernetes" },
+      { name: "Postman" },
+      { name: "Azure" },
+      { name: "Google Cloud" },
+      { name: "AWS" },
+    ],
+  },
+];
+
+export const experiences = [
+  // Add your experiences here
+];
+
+export const contact = {
+  description:
+    "For any opportunities or questions, please feel free to contact me.",
+  email: "christopher.jiang@uwaterloo.ca",
+};
+
+File: ./src/features/Portfolio/components/card/Card.tsx
+
+import React from "react";
+import { SiGithub } from "react-icons/si";
+import { RiArrowRightLine } from "react-icons/ri";
+import Icon from "../icon/Icon";
+import "./Card.css";
+
+interface CardProps {
+  name: string;
+  description: string;
+  stack: Array<{
+    icon: React.ComponentType;
+    name: string;
+  }>;
+  linkProject: string;
+  linkGithub: string;
+  theme: string;
+  colors: {
+    background: string;
+    text: string;
+    primary: string;
+    secondary: string;
+    accent: string;
+    surface: string;
+    border: string;
+  };
+}
+
+const Card: React.FC<CardProps> = ({
+  name,
+  description,
+  stack,
+  linkProject,
+  linkGithub,
+  colors,
+}) => {
+  return (
+    <div
+      className="Card"
+      style={{
+        backgroundColor: colors.surface,
+        color: colors.text,
+        border: `1px solid ${colors.accent}`,
+      }}
+    >
+      <h3 className="Card-h3">{name}</h3>
+      <p className="Card-description">{description}</p>
+      <div className="Card-tech">
+        {stack.map((tech, index) => (
+          <Icon icon={tech.icon} key={`${tech.name}-${index}`} />
+        ))}
+      </div>
+      <div className="Card-links">
+        <a
+          href={linkProject}
+          rel="noreferrer"
+          className="Card-link-project"
+          target="_blank"
+          style={{ color: colors.accent }}
+        >
+          View Project <RiArrowRightLine className="Card-icon-arrow" />
+        </a>
+        <a
+          href={linkGithub}
+          rel="noreferrer"
+          className="Card-link-github"
+          target="_blank"
+          style={{ color: colors.accent }}
+        >
+          <SiGithub className="Card-icon-github" />
+        </a>
+      </div>
+    </div>
+  );
+};
+
+export default Card;
+
+File: ./src/features/Portfolio/components/socialMedia/SocialMedia.tsx
+
+import React from "react";
+import { social } from "../../portfolio";
+import "./SocialMedia.css";
+
+const SocialMedia: React.FC = () => {
+  return (
+    <div className="social-media">
+      {social.map((platform, index) => (
+        <a
+          key={index}
+          href={platform.link}
+          className="social-media-link"
+          target="_blank"
+          rel="noopener noreferrer"
+          aria-label={`Visit my ${platform.name}`}
+        >
+          {platform.name}
+        </a>
+      ))}
+    </div>
+  );
+};
+
+export default SocialMedia;
+
+File: ./src/features/Portfolio/components/icon/Icon.tsx
+
+import React from "react";
+
+interface IconProps {
+  icon: React.ComponentType<any>;
+  [key: string]: any;
+}
+
+const Icon: React.FC<IconProps> = ({ icon: TheIcon, ...restProps }) => {
+  return <TheIcon {...restProps} />;
+};
+
+export default Icon;
+
+File: ./src/features/Portfolio/components/header/Header.tsx
+
+import React, { useState, useEffect } from 'react';
+import { useTheme } from '../../../../context/ThemeContext';
+import { FiSun, FiMoon, FiMenu, FiX } from 'react-icons/fi';
+import './Header.css';
+
+const Header: React.FC = () => {
+  const { theme, toggleTheme, colors } = useTheme();
+  const [isScrolled, setIsScrolled] = useState(false);
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      setIsScrolled(window.scrollY > 50);
+    };
+
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  const scrollToSection = (sectionId: string) => {
+    const element = document.getElementById(sectionId);
+    if (element) {
+      element.scrollIntoView({ behavior: 'smooth' });
+      setIsMenuOpen(false);
+    }
+  };
+
+  return (
+    <header
+      className={`portfolio-header ${isScrolled ? 'scrolled' : ''}`}
+      style={{
+        backgroundColor: isScrolled ? colors.surface : 'transparent',
+        borderBottom: isScrolled ? `1px solid ${colors.border}` : 'none',
+      }}
+    >
+      <div className="header-content">
+        <h1 className="logo" style={{ color: colors.text }}>CJ</h1>
+        
+        <button className="mobile-menu-btn" onClick={() => setIsMenuOpen(!isMenuOpen)}>
+          {isMenuOpen ? <FiX /> : <FiMenu />}
+        </button>
+
+        <nav className={`nav-links ${isMenuOpen ? 'open' : ''}`}>
+          <button onClick={() => scrollToSection('about')}>About</button>
+          <button onClick={() => scrollToSection('education')}>Education</button>
+          <button onClick={() => scrollToSection('experience')}>Experience</button>
+          <button onClick={() => scrollToSection('skills')}>Skills</button>
+          <button onClick={() => scrollToSection('projects')}>Projects</button>
+          <button onClick={() => scrollToSection('contact')}>Contact</button>
+          <button 
+            className="theme-toggle"
+            onClick={toggleTheme}
+            aria-label="Toggle theme"
+          >
+            {theme === 'light' ? <FiMoon /> : <FiSun />}
+          </button>
+        </nav>
+      </div>
+    </header>
+  );
+};
+
+export default Header;
+
+File: ./src/features/Portfolio/containers/experience/Experience.tsx
+
+import React from "react";
+import { experiences } from "../../portfolio";
+import {
+  VerticalTimeline,
+  VerticalTimelineElement,
+} from "react-vertical-timeline-component";
+import "react-vertical-timeline-component/style.min.css";
+import "./Experience.css";
+
+interface ExperienceProps {
+  theme: string;
+  colors: {
+    background: string;
+    text: string;
+    primary: string;
+    secondary: string;
+    accent: string;
+    surface: string;
+    border: string;
+  };
+}
+
+const Experience: React.FC<ExperienceProps> = ({ theme, colors }) => {
+  return (
+    <section className="Experience section" id="experience">
+      <div className="container">
+        <h2
+          className="Experience-h2 section-head"
+          style={{ color: colors.text }}
+        >
+          Experience
+        </h2>
+        <div className="Experience-wrapper">
+          <VerticalTimeline>
+            {experiences.map((experience, index) => (
+              <VerticalTimelineElement
+                key={`${experience.Company}-${index}`}
+                date={
+                  <span
+                    className="date-style"
+                    style={{ color: colors.text }}
+                  >{`${experience.StartDate} - ${experience.EndDate}`}</span>
+                }
+                iconStyle={{
+                  background: colors.accent,
+                  color: colors.background,
+                }}
+                icon={
+                  <img
+                    alt=""
+                    src={experience.Icon}
+                    style={{
+                      width: "100%",
+                      height: "100%",
+                      borderRadius: "50%",
+                      objectFit: "cover",
+                    }}
+                  />
+                }
+                contentStyle={{
+                  background: colors.surface,
+                  color: colors.text,
+                  border: `1px solid ${colors.accent}`,
+                }}
+                contentArrowStyle={{
+                  borderRight: `7px solid ${colors.accent}`,
+                }}
+              >
+                <h3 className="vertical-timeline-element-title">
+                  {experience.Role}, {experience.Company}
+                </h3>
+                <h4 className="vertical-timeline-element-subtitle">
+                  {experience.Location}
+                </h4>
+                <ul>
+                  {experience.Description.map((item, index) => (
+                    <li key={index}>{item}</li>
+                  ))}
+                </ul>
+              </VerticalTimelineElement>
+            ))}
+          </VerticalTimeline>
+        </div>
+      </div>
+    </section>
+  );
+};
+
+export default Experience;
+
+File: ./src/features/Portfolio/containers/Main.tsx
+
+import React from "react";
+import Header from "../components/header/Header";
+import Greeting from "./greeting/Greeting";
+import Projects from "./projects/Projects";
+import Experience from "./experience/Experience";
+import "./Main.css";
+
+interface MainProps {
+  theme: {
+    body: string;
+    text: string;
+    highlight: string;
+    dark: string;
+    secondaryText: string;
+    accentColor: string;
+    accentBright: string;
+    projectCard: string;
+    name: string;
+  };
+  setTheme: (theme: string) => void;
+}
+
+const Main: React.FC<MainProps> = ({ theme, setTheme }) => {
+  return (
+    <div className="portfolio-main">
+      <Header theme={theme} setTheme={setTheme} />
+      <div className="main" style={{ backgroundColor: theme.body }}>
+        <div id="greeting">
+          <Greeting theme={theme} />
+        </div>
+        <div id="projects">
+          <Projects theme={theme} />
+        </div>
+        <div id="experience">
+          <Experience theme={theme} />
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default Main;
+
+File: ./src/features/Portfolio/containers/greeting/FeelingProud.tsx
+
+import React from "react";
+
+interface FeelingProudProps {
+  theme: string;
+  colors: {
+    background: string;
+    text: string;
+    primary: string;
+    secondary: string;
+    accent: string;
+    surface: string;
+    border: string;
+  };
+}
+
+const FeelingProud: React.FC<FeelingProudProps> = ({ theme }) => {
+  return (
+    <div className="feeling-proud-illustration">
+      <img
+        src="/illustrations/feeling_proud.svg"
+        alt="Developer illustration"
+        style={{
+          maxWidth: "100%",
+          height: "auto",
+          filter: theme === "dark" ? "brightness(0.8)" : "none",
+        }}
+      />
+    </div>
+  );
+};
+
+export default FeelingProud;
+
+File: ./src/features/Portfolio/containers/greeting/Greeting.tsx
+
+import React from "react";
+import "./Greeting.css";
+import SocialMedia from "../../components/socialMedia/SocialMedia";
+import { greeting } from "../../portfolio";
+import { motion } from "framer-motion";
+import { useNavigate } from "react-router-dom";
+import FeelingProud from "./FeelingProud";
+import { style } from "glamor";
+
+interface GreetingProps {
+  theme: string;
+  colors: {
+    background: string;
+    text: string;
+    primary: string;
+    secondary: string;
+    accent: string;
+    surface: string;
+    border: string;
+  };
+}
+
+export default function Greeting({ theme, colors }: GreetingProps) {
+  const navigate = useNavigate();
+
+  const styles = style({
+    backgroundColor: colors.accent,
+    ":hover": {
+      boxShadow: `0 5px 15px ${colors.accent}`,
+    },
+  });
+
+  const powerButtonStyle = style({
+    backgroundColor: colors.accent,
+    color: colors.background,
+    padding: "15px 30px",
+    border: "none",
+    borderRadius: "30px",
+    fontSize: "1.2rem",
+    cursor: "pointer",
+    marginTop: "20px",
+    transition: "all 0.3s ease-in-out",
+    ":hover": {
+      transform: "scale(1.05)",
+      boxShadow: `0 5px 15px ${colors.accent}`,
+    },
+  });
+
+  return (
+    <motion.div
+      className="greet-main"
+      id="greeting"
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 1 }}
+    >
+      <div className="greeting-main">
+        <div className="greeting-text-div">
+          <div>
+            <motion.h1
+              className="greeting-text"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.2, duration: 0.8 }}
+            >
+              {greeting.title}
+            </motion.h1>
+            <motion.p
+              className="greeting-text-p subTitle"
+              style={{ color: colors.secondary }}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.4, duration: 0.8 }}
+            >
+              <span>I'm </span>
+              <span style={{ color: colors.accent }}>
+                {greeting.full_name}.{" "}
+              </span>
+              {greeting.subTitle}
+            </motion.p>
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.6, duration: 0.8 }}
+            >
+              <SocialMedia />
+            </motion.div>
+            <motion.div
+              className="portfolio-repo-btn-div"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.8, duration: 0.8 }}
+            >
+              <button
+                {...styles}
+                className="button"
+                onClick={() => {
+                  navigate("/contact");
+                }}
+              >
+                Contact Me
+              </button>
+              <button
+                {...powerButtonStyle}
+                onClick={() => navigate("/desktop")}
+              >
+                View Interactive Desktop 🖥️
+              </button>
+            </motion.div>
+            <motion.p
+              style={{ marginTop: "15px", color: colors.secondary }}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 1, duration: 0.8 }}
+            >
+              (Click to explore my macOS-style portfolio!)
+            </motion.p>
+          </div>
+        </div>
+        <motion.div
+          className="greeting-image-div"
+          initial={{ opacity: 0, x: 20 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ delay: 0.4, duration: 0.8 }}
+        >
+          <FeelingProud theme={theme} colors={colors} />
+        </motion.div>
+      </div>
+    </motion.div>
+  );
+}
+
+File: ./src/features/Portfolio/containers/projects/Projects.tsx
+
+import React from "react";
+import { work } from "../../portfolio";
+import Card from "../../components/card/Card";
+import "./Projects.css";
+import Carousel from "react-multi-carousel";
+import "react-multi-carousel/lib/styles.css";
+
+interface ProjectsProps {
+  theme: {
+    body: string;
+    text: string;
+    highlight: string;
+    dark: string;
+    secondaryText: string;
+    accentColor: string;
+    accentBright: string;
+    projectCard: string;
+    name: string;
+  };
+}
+
+const responsive = {
+  desktop: {
+    breakpoint: { max: 3000, min: 1024 },
+    items: 2,
+    slidesToSlide: 2,
+  },
+  tablet: {
+    breakpoint: { max: 1024, min: 464 },
+    items: 1,
+    slidesToSlide: 1,
+  },
+  mobile: {
+    breakpoint: { max: 464, min: 0 },
+    items: 1,
+    slidesToSlide: 1,
+  },
+};
+
+const Projects: React.FC<ProjectsProps> = ({ theme }) => {
+  return (
+    <section className="Project section" id="project">
+      <div className="container">
+        <h2 className="Project-h2 section-head" style={{ color: theme.text }}>
+          Projects
+        </h2>
+        <div className="Project-wrapper">
+          <Carousel
+            responsive={responsive}
+            autoPlay={true}
+            autoPlaySpeed={2000}
+            infinite={true}
+            removeArrowOnDeviceType={["tablet", "mobile"]}
+            containerClass="carousel-container"
+            itemClass="carousel-item"
+          >
+            {work.map((project, index) => (
+              <div key={`${project.name}-${index}`}>
+                <Card
+                  name={project.name}
+                  description={project.description}
+                  stack={project.stack}
+                  linkProject={project.linkProject}
+                  linkGithub={project.linkGithub}
+                  theme={theme}
+                />
+              </div>
+            ))}
+          </Carousel>
+        </div>
+      </div>
+    </section>
+  );
+};
+
+export default Projects;
+
+File: ./src/features/Portfolio/containers/Main/Main.tsx
+
+import React, { useEffect } from "react";
+import Header from "../../components/header/Header";
+import Greeting from "../greeting/Greeting";
+import Projects from "../projects/Projects";
+import Experience from "../experience/Experience";
+import { useTheme } from "../../../../context/ThemeContext";
+import "./Main.css";
+
+const Main: React.FC = () => {
+  const { colors, theme } = useTheme();
+
+  useEffect(() => {
+    // Apply theme class to body when component mounts
+    document.body.classList.add(`theme-${theme}`);
+    return () => {
+      // Clean up theme class when component unmounts
+      document.body.classList.remove(`theme-${theme}`);
+    };
+  }, [theme]);
+
+  if (!colors || !theme) {
+    return (
+      <div className="loading-container">
+        <div className="loading-spinner">Loading...</div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="portfolio-main">
+      <Header />
+      <div className="main" style={{ backgroundColor: colors.background }}>
+        <div id="greeting">
+          <Greeting theme={theme} colors={colors} />
+        </div>
+        <div id="projects">
+          <Projects theme={theme} colors={colors} />
+        </div>
+        <div id="experience">
+          <Experience theme={theme} colors={colors} />
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default Main;
 
 File: ./src/features/Topbar/components/Topbar.tsx
 
@@ -836,9 +2004,19 @@ const WeatherDisplay: React.FC = () => {
 };
 
 export default WeatherDisplay;
+File: ./src/features/Dock/components/Dock.test.tsx
+
+import { render } from "@testing-library/react";
+import Dock from "./Dock";
+
+test("renders Dock component", () => {
+  render(<Dock openApp={() => {}} />);
+  // Add more specific tests here
+});
+
 File: ./src/features/Dock/components/Dock.tsx
 
-import React, { useRef } from "react";
+import { useRef } from "react";
 import {
   motion,
   useMotionValue,
@@ -848,7 +2026,6 @@ import {
   MotionValue,
 } from "framer-motion";
 import { useAppStore } from "@hooks/useAppStore";
-import AppIcon from "@shared/components/AppIcon/AppIcon";
 import { apps } from "@shared/constants";
 import { useWindowOpener } from "@hooks/useWindowOpener";
 
@@ -865,9 +2042,9 @@ interface Props {
   openApp: (appName: string, startPosition?: { x: number; y: number }) => void;
 }
 
-export default function Dock({ openApp }: Props) {
+export default function Dock({}: Props) {
   const mouseLeft = useMotionValue(-Infinity);
-  const { openApps, minimizeApp, restoreApp } = useAppStore();
+  // const { openApps, minimizeApp, restoreApp } = useAppStore();
   const { openOrRestoreWindow } = useWindowOpener();
 
   const handleDockIconClick = (appName: string) => {
@@ -884,10 +2061,10 @@ export default function Dock({ openApp }: Props) {
       onMouseLeave={() => mouseLeft.set(-Infinity)}
     >
       {apps.map((app) => {
-        const isRunning = openApps.some((a) => a.appName === app.name);
-        const isMinimized = openApps.some(
-          (a) => a.appName === app.name && a.minimized
-        );
+        // const isRunning = openApps.some((a) => a.appName === app.name);
+        // const isMinimized = openApps.some(
+        //   (a) => a.appName === app.name && a.minimized
+        // );
 
         return (
           <DockItem
@@ -903,9 +2080,9 @@ export default function Dock({ openApp }: Props) {
 }
 
 interface DockItemProps {
-  app: { 
-    name: string; 
-    icon: string; 
+  app: {
+    name: string;
+    icon: string;
     link?: string;
     defaultFile?: string;
   };
@@ -917,7 +2094,7 @@ function DockItem({ app, openApp, mouseLeft }: DockItemProps) {
   const ref = useRef<HTMLDivElement>(null);
   const { openApps } = useAppStore();
   const isMinimized = openApps.some(
-    a => a.appName === app.name && a.minimized
+    (a) => a.appName === app.name && a.minimized
   );
 
   const distance = useTransform(() => {
@@ -943,7 +2120,9 @@ function DockItem({ app, openApp, mouseLeft }: DockItemProps) {
     <motion.div
       ref={ref}
       style={{ x: xSpring, scale: scaleSpring, y }}
-      className={`group relative flex flex-col items-center ${isMinimized ? 'minimized' : ''}`}
+      className={`group relative flex flex-col items-center ${
+        isMinimized ? "minimized" : ""
+      }`}
       onClick={() => {
         animate(y, [0, -20, 0], {
           repeat: 2,
@@ -982,10 +2161,9 @@ interface AppIconProps {
   name: string;
   icon: string;
   onClick?: () => void;
-  link?: string;
 }
 
-export default function AppIcon({ name, icon, onClick, link }: AppIconProps) {
+export default function AppIcon({ name, icon, onClick }: AppIconProps) {
   return (
     <div className="icon-wrapper" onClick={onClick}>
       <motion.img src={icon} className="icon-image" alt={name} />
@@ -997,16 +2175,20 @@ File: ./src/shared/constants.ts
 
 export const apps = [
   { name: "Finder", icon: "/icons/finder-icon.png" },
-  { name: "Terminal", icon: "/icons/terminal.png" },
+  { name: "Terminal", icon: "/icons/terminal.svg" },
   {
     name: "Resume",
-    icon: "/icons/pdf-icon.png",
+    icon: "/icons/resume.webp",
     defaultFile: "/docs/Resume.pdf",
   },
   {
     name: "GitHub",
-    icon: "/icons/github.png",
+    icon: "/icons/github.webp",
     link: "https://github.com/Chrisyhjiang",
+  },
+  {
+    name: "Readme",
+    icon: "/icons/notes.png",
   },
 ];
 
@@ -1020,7 +2202,7 @@ import { useAppStore } from "./useAppStore";
 import { apps } from "@shared/constants";
 
 export const useWindowOpener = () => {
-  const { openApps, openApp, restoreApp, minimizeApp } = useAppStore();
+  const { openApps, openApp, restoreApp } = useAppStore();
 
   const openOrRestoreWindow = (
     appName: string,
@@ -1134,32 +2316,41 @@ interface AppState {
     startPosition?: { x: number; y: number };
     filePath?: string;
   }[];
-  openApp: (appName: string, options?: { filePath?: string; startPosition?: { x: number; y: number } }) => void;
+  openApp: (
+    appName: string,
+    options?: { filePath?: string; startPosition?: { x: number; y: number } }
+  ) => void;
   minimizeApp: (appName: string) => void;
   restoreApp: (appName: string) => void;
   closeApp: (appName: string) => void;
   setWindowPosition: (appName: string, position: WindowPosition) => void;
   completeRestore: (appName: string) => void;
   desktopIcons: DesktopIconState[];
-  updateIconPosition: (appName: string, position: { x: number; y: number }) => void;
+  updateIconPosition: (
+    appName: string,
+    position: { x: number; y: number }
+  ) => void;
   initializeDesktopIcons: () => void;
 }
 
-export const useAppStore = create<AppState>((set, get) => ({
+export const useAppStore = create<AppState>((set) => ({
   openApps: [],
   desktopIcons: [],
 
-  openApp: (appName: string, options?: { filePath?: string; startPosition?: { x: number; y: number } }) => {
+  openApp: (
+    appName: string,
+    options?: { filePath?: string; startPosition?: { x: number; y: number } }
+  ) => {
     console.log(`[${appName}] Opening app with options:`, options);
     set((state) => ({
       openApps: [
         ...state.openApps,
-        { 
-          appName, 
+        {
+          appName,
           minimized: false,
           startPosition: options?.startPosition,
-          ...options 
-        }
+          ...options,
+        },
       ],
     }));
   },
@@ -1167,9 +2358,7 @@ export const useAppStore = create<AppState>((set, get) => ({
   minimizeApp: (appName: string) =>
     set((state) => ({
       openApps: state.openApps.map((app) =>
-        app.appName === appName
-          ? { ...app, minimized: true }
-          : app
+        app.appName === appName ? { ...app, minimized: true } : app
       ),
     })),
 
@@ -1177,9 +2366,7 @@ export const useAppStore = create<AppState>((set, get) => ({
     console.log(`[${appName}] Restoring app`);
     set((state) => ({
       openApps: state.openApps.map((app) =>
-        app.appName === appName
-          ? { ...app, minimized: false }
-          : app
+        app.appName === appName ? { ...app, minimized: false } : app
       ),
     }));
   },
@@ -1187,9 +2374,7 @@ export const useAppStore = create<AppState>((set, get) => ({
   completeRestore: (appName: string) =>
     set((state) => ({
       openApps: state.openApps.map((app) =>
-        app.appName === appName
-          ? { ...app, minimized: false }
-          : app
+        app.appName === appName ? { ...app, minimized: false } : app
       ),
     })),
 
@@ -1198,13 +2383,11 @@ export const useAppStore = create<AppState>((set, get) => ({
       openApps: state.openApps.filter((app) => app.appName !== appName),
     })),
 
-  setWindowPosition: (appName, position) => 
-    set(state => ({
-      openApps: state.openApps.map(app => 
-        app.appName === appName 
-          ? { ...app, lastPosition: position }
-          : app
-      )
+  setWindowPosition: (appName, position) =>
+    set((state) => ({
+      openApps: state.openApps.map((app) =>
+        app.appName === appName ? { ...app, lastPosition: position } : app
+      ),
     })),
 
   updateIconPosition: (appName, position) =>
@@ -1219,10 +2402,10 @@ export const useAppStore = create<AppState>((set, get) => ({
       app: app.name,
       position: {
         x: 20,
-        y: 20 + (index * 150)
-      }
+        y: 20 + index * 150,
+      },
     }));
-    
+
     set({ desktopIcons: initialIcons });
   },
 }));
@@ -1231,23 +2414,32 @@ export const useAppStore = create<AppState>((set, get) => ({
 Directory structure of src excluding node_modules:
 
 ./src
+├── App.css
 ├── App.tsx
 ├── assets
 │   └── react.svg
+├── context
+│   └── ThemeContext.tsx
 ├── features
+│   ├── Background
+│   │   └── components
+│   │       └── Background.tsx
 │   ├── Desktop
 │   │   ├── components
+│   │   │   ├── Desktop.test.tsx
 │   │   │   └── Desktop.tsx
 │   │   ├── hooks
 │   │   └── styles
 │   ├── Dock
 │   │   ├── components
+│   │   │   ├── Dock.test.tsx
 │   │   │   └── Dock.tsx
 │   │   ├── hooks
 │   │   └── styles
 │   │       └── Dock.css
 │   ├── Finder
 │   │   ├── components
+│   │   │   ├── Finder.test.tsx
 │   │   │   └── Finder.tsx
 │   │   ├── hooks
 │   │   └── styles
@@ -1258,11 +2450,48 @@ Directory structure of src excluding node_modules:
 │   │       └── Loading.css
 │   ├── PDFViewer
 │   │   ├── components
+│   │   │   ├── PDFViewer.test.tsx
 │   │   │   └── PDFViewer.tsx
 │   │   ├── hooks
 │   │   └── styles
+│   ├── Portfolio
+│   │   ├── components
+│   │   │   ├── card
+│   │   │   │   ├── Card.css
+│   │   │   │   └── Card.tsx
+│   │   │   ├── header
+│   │   │   │   ├── Header.css
+│   │   │   │   └── Header.tsx
+│   │   │   ├── icon
+│   │   │   │   └── Icon.tsx
+│   │   │   └── socialMedia
+│   │   │       ├── SocialMedia.css
+│   │   │       └── SocialMedia.tsx
+│   │   ├── containers
+│   │   │   ├── Main
+│   │   │   │   ├── Main.css
+│   │   │   │   └── Main.tsx
+│   │   │   ├── Main.css
+│   │   │   ├── Main.tsx
+│   │   │   ├── experience
+│   │   │   │   ├── Experience.css
+│   │   │   │   └── Experience.tsx
+│   │   │   ├── greeting
+│   │   │   │   ├── FeelingProud.tsx
+│   │   │   │   ├── Greeting.css
+│   │   │   │   └── Greeting.tsx
+│   │   │   └── projects
+│   │   │       ├── Projects.css
+│   │   │       └── Projects.tsx
+│   │   └── portfolio.ts
+│   ├── Readme
+│   │   ├── components
+│   │   │   └── Readme.tsx
+│   │   └── styles
+│   │       └── styles.css
 │   ├── Terminal
 │   │   ├── components
+│   │   │   ├── Terminal.test.tsx
 │   │   │   └── Terminal.tsx
 │   │   ├── hooks
 │   │   └── styles
@@ -1275,6 +2504,7 @@ Directory structure of src excluding node_modules:
 │   │       └── WeatherDisplay.css
 │   └── Window
 │       ├── components
+│       │   ├── Window.test.tsx
 │       │   └── Window.tsx
 │       ├── hooks
 │       └── styles
@@ -1291,8 +2521,9 @@ Directory structure of src excluding node_modules:
 │   └── constants.ts
 ├── styles
 │   ├── Window.css
+│   ├── fonts.css
 │   ├── global.css
 │   └── index.css
 └── vite-env.d.ts
 
-38 directories, 26 files
+55 directories, 57 files

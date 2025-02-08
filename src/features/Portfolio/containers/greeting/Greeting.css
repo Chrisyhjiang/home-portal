@@ -1,0 +1,108 @@
+.greet-main {
+  width: 90%;
+  padding: 0.5rem 1rem 1rem 1rem;
+  margin: 0 auto;
+}
+
+.greeting-main {
+  width: 90%;
+  padding: 0.5rem 1rem 1rem 1rem;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.greeting-text-div {
+  flex: 1;
+  margin-right: 2rem;
+}
+
+.greeting-image-div {
+  flex: 1;
+  max-width: 40%;
+  height: auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.greeting-text {
+  font-size: 3rem;
+  line-height: 1.2;
+  margin-bottom: 1rem;
+  font-weight: bold;
+}
+
+.greeting-text-p {
+  font-size: 1.25rem;
+  line-height: 1.5;
+  margin-bottom: 1.5rem;
+}
+
+.portfolio-repo-btn-div {
+  display: flex;
+  gap: 1.5rem;
+  margin-top: 2rem;
+  flex-wrap: wrap;
+}
+
+.button {
+  text-decoration: none;
+  color: rgba(255, 255, 255, 1);
+  padding: 1rem 2rem;
+  border-radius: 12px;
+  border: none;
+  font-weight: 600;
+  font-size: 1.1rem;
+  cursor: pointer;
+  transition: all 0.3s ease-in-out;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 180px;
+  backdrop-filter: blur(10px);
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.button:hover {
+  transform: translateY(-2px);
+}
+
+@media (max-width: 768px) {
+  .greeting-main {
+    flex-direction: column;
+    padding: 0;
+  }
+
+  .greeting-text-div {
+    margin-right: 0;
+    margin-bottom: 1.5rem;
+    text-align: center;
+  }
+
+  .greeting-image-div {
+    max-width: 80%;
+  }
+
+  .greeting-text {
+    font-size: 2rem;
+  }
+
+  .greeting-text-p {
+    font-size: 1.1rem;
+  }
+
+  .portfolio-repo-btn-div {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 1rem;
+    padding: 0 1rem;
+  }
+
+  .button {
+    width: 100%;
+    padding: 0.9rem 1.5rem;
+    font-size: 1rem;
+  }
+}

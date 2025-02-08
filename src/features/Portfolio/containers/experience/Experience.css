@@ -1,0 +1,72 @@
+.Experience {
+  padding: 100px 0;
+}
+
+.Experience-h2 {
+  font-size: 2.5rem;
+  font-weight: bold;
+  text-align: center;
+  margin-bottom: 50px;
+}
+
+.Experience-wrapper {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 20px;
+}
+
+/* Timeline spine color for light and dark themes */
+:global(.vertical-timeline.vertical-timeline--two-columns::before) {
+  background: var(--text-color);
+}
+
+.vertical-timeline-element-title {
+  font-size: 1.5rem;
+  font-weight: bold;
+  margin-bottom: 10px;
+}
+
+.vertical-timeline-element-subtitle {
+  font-size: 1.1rem;
+  margin-bottom: 15px;
+}
+
+.vertical-timeline-element-content {
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
+  padding: 2em;
+}
+
+.vertical-timeline-element-content ul {
+  list-style-type: disc;
+  margin-left: 20px;
+  margin-top: 15px;
+}
+
+.vertical-timeline-element-content li {
+  margin-bottom: 8px;
+  line-height: 1.6;
+}
+
+.date-style {
+  font-weight: 600;
+  padding: 5px 10px;
+  border-radius: 4px;
+}
+
+@media (max-width: 768px) {
+  .Experience-h2 {
+    font-size: 2rem;
+  }
+
+  .vertical-timeline-element-title {
+    font-size: 1.2rem;
+  }
+
+  .vertical-timeline-element-subtitle {
+    font-size: 1rem;
+  }
+
+  .vertical-timeline-element-content {
+    padding: 1.5em;
+  }
+}

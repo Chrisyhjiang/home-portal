@@ -1,0 +1,94 @@
+.Project {
+  width: 100%;
+  padding: 1rem 0;
+}
+
+.Project-h2 {
+  font-size: 2.5rem;
+  font-weight: bold;
+  text-align: center;
+  margin-bottom: 2rem;
+}
+
+.Project-wrapper {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 20px;
+  width: 100%;
+}
+
+.carousel-container {
+  padding-bottom: 2rem;
+  width: 100%;
+}
+
+.carousel-item {
+  padding: 0 15px;
+  height: 100%;
+}
+
+/* Custom arrow styles */
+.react-multiple-carousel__arrow {
+  background: rgba(0, 0, 0, 0.5);
+  border-radius: 50%;
+  min-width: 40px;
+  min-height: 40px;
+  z-index: 1;
+}
+
+.react-multiple-carousel__arrow:hover {
+  background: rgba(0, 0, 0, 0.8);
+}
+
+.react-multiple-carousel__arrow--left {
+  left: 10px;
+}
+
+.react-multiple-carousel__arrow--right {
+  right: 10px;
+}
+
+/* Dots styles */
+.react-multi-carousel-dot-list {
+  bottom: 0;
+  margin-bottom: -1rem;
+}
+
+.react-multi-carousel-dot button {
+  border-color: #666;
+  margin: 0 5px;
+}
+
+.react-multi-carousel-dot--active button {
+  background: #666;
+}
+
+/* Container styles */
+.container {
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 20px;
+}
+
+@media (max-width: 768px) {
+  .Project {
+    padding: 1rem 0;
+  }
+
+  .Project-h2 {
+    font-size: 2rem;
+  }
+
+  .Project-wrapper {
+    padding: 0 10px;
+  }
+
+  .carousel-item {
+    padding: 0 10px;
+  }
+
+  .container {
+    padding: 0 15px;
+  }
+}
