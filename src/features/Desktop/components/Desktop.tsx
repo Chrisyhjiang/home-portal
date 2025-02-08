@@ -13,6 +13,7 @@ import AppIcon from "@shared/components/AppIcon/AppIcon";
 import { Rnd } from "react-rnd";
 import { useWindowOpener } from "@hooks/useWindowOpener";
 import { useWindowManager } from "@hooks/useWindowManager";
+import Readme from "@/features/Readme/components/Readme";
 
 interface DesktopIconProps {
   app: {
@@ -213,6 +214,7 @@ export default function Desktop() {
                       onClose={() => closeApp(appName)}
                     />
                   )}
+                  {appName === "Readme" && <Readme />}
                 </Window>
               </div>
             );

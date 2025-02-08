@@ -2,11 +2,14 @@
 @tailwind components;
 @tailwind utilities;
 @import "./mac_background.css";
+@import './fonts.css';
 
 /* Custom MacOS-like Styling */
 html,
 body {
-  font-family: "Inter", sans-serif;
+  font-family: 'SF Pro', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
   background-color: #121212;
 }
 .overlay {

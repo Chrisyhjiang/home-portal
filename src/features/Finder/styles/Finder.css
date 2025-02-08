@@ -5,15 +5,17 @@
   background-color: #0d0d0d;
   color: #ffffff;
   padding: 16px;
-  font-family: "Orbitron", sans-serif;
+  font-family: "SF Pro", -apple-system, BlinkMacSystemFont, system-ui,
+    sans-serif;
 }
 
 .finder-title {
   font-size: 1.5rem;
-  font-weight: bold;
+  font-weight: 500; /* Medium weight for titles */
   color: #00ffff;
   text-shadow: 0 0 5px #00ffff;
   margin-bottom: 10px;
+  letter-spacing: -0.022em; /* macOS-like letter spacing */
 }
 
 .finder-list {
@@ -23,6 +25,8 @@
 
 .finder-item {
   margin: 8px 0;
+  font-size: 14px; /* macOS default size */
+  letter-spacing: -0.016em;
 }
 
 .finder-link,
@@ -31,6 +35,7 @@
   text-decoration: none;
   cursor: pointer;
   transition: color 0.2s, text-shadow 0.2s;
+  font-weight: normal;
 }
 
 .finder-link:hover,

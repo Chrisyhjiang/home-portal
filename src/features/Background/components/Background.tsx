@@ -82,8 +82,8 @@ const Background: React.FC = () => {
           const newDisplacementFilter = new DisplacementFilter(
             new PIXI.Sprite(depthTexture)
           );
-          newDisplacementFilter.scale.x = 20;
-          newDisplacementFilter.scale.y = 20;
+          newDisplacementFilter.scale.x = 15;
+          newDisplacementFilter.scale.y = 15;
           backgroundRef.current.filters = [newDisplacementFilter];
           displacementFilterRef.current = newDisplacementFilter;
         }
@@ -182,8 +182,8 @@ const Background: React.FC = () => {
         console.log("Sprites added to stage");
 
         const displacementFilter = new DisplacementFilter(depthMap);
-        displacementFilter.scale.x = 20;
-        displacementFilter.scale.y = 20;
+        displacementFilter.scale.x = 15;
+        displacementFilter.scale.y = 15;
         background.filters = [displacementFilter];
         displacementFilterRef.current = displacementFilter;
 

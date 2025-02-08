@@ -11,4 +11,8 @@ export const apps = [
     icon: "/icons/github.webp",
     link: "https://github.com/Chrisyhjiang",
   },
+  {
+    name: "Readme",
+    icon: "/icons/notes.png",
+  },
 ];
