@@ -8,7 +8,6 @@ import "react-vertical-timeline-component/style.min.css";
 import "./Experience.css";
 
 interface ExperienceProps {
-  theme: string;
   colors: {
     background: string;
     text: string;
@@ -20,7 +19,7 @@ interface ExperienceProps {
   };
 }
 
-const Experience: React.FC<ExperienceProps> = ({ theme, colors }) => {
+const Experience: React.FC<ExperienceProps> = ({ colors }) => {
   return (
     <section className="Experience section" id="experience">
       <div className="container">

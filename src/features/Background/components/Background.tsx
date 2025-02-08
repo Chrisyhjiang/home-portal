@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
 import * as PIXI from "pixi.js";
-import { DisplacementFilter, Filter, Sprite } from "pixi.js";
+import { DisplacementFilter } from "pixi.js";
 
 // Available wallpapers and their depth maps
 const WALLPAPERS = [

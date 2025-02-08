@@ -1,4 +1,3 @@
-import React from "react";
 import "./Greeting.css";
 import SocialMedia from "../../components/socialMedia/SocialMedia";
 import { greeting } from "../../portfolio";
@@ -21,13 +20,6 @@ interface GreetingProps {
 }
 
 export default function Greeting({ theme, colors }: GreetingProps) {
-  const styles = style({
-    backgroundColor: colors.accent,
-    ":hover": {
-      boxShadow: `0 5px 15px ${colors.accent}`,
-    },
-  });
-
   const buttonStyle = style({
     backgroundColor: colors.accent,
     color: colors.background,
@@ -50,21 +42,6 @@ export default function Greeting({ theme, colors }: GreetingProps) {
       boxShadow: `0 6px 12px ${colors.accent}40`,
     },
   });
-
-  const scrollToContact = () => {
-    const element = document.getElementById("contact");
-    if (element) {
-      const headerOffset = 70;
-      const elementPosition =
-        element.getBoundingClientRect().top + window.pageYOffset;
-      const offsetPosition = elementPosition - headerOffset;
-
-      window.scrollTo({
-        top: offsetPosition,
-        behavior: "smooth",
-      });
-    }
-  };
 
   return (
     <motion.div
