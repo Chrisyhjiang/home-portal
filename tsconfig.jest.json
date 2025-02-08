@@ -1,0 +1,9 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "module": "CommonJS", // Jest requires CommonJS modules
+    "outDir": "./dist", // Output directory (optional)
+    "rootDir": "." // Root directory for compilation
+  },
+  "include": ["src", "tests"] // Include test files
+}

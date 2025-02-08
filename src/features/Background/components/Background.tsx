@@ -1,23 +1,128 @@
-import React, { useEffect, useRef } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import * as PIXI from "pixi.js";
-import { DisplacementFilter } from "pixi.js";
+import { DisplacementFilter, Filter, Sprite } from "pixi.js";
+
+// Available wallpapers and their depth maps
+const WALLPAPERS = [
+  { image: "anime", ext: "png" },
+  { image: "astro", ext: "jpg" },
+  { image: "car", ext: "jpg" },
+  { image: "castle", ext: "jpg" },
+  { image: "cave", ext: "jpg" },
+  { image: "cyber", ext: "png" },
+  { image: "fantasy", ext: "jpg" },
+  { image: "fantasy2", ext: "jpg" },
+  { image: "northernlights", ext: "jpg" },
+  { image: "onepiece", ext: "jpg" },
+  { image: "sunrise", ext: "jpg" },
+  { image: "waterfall", ext: "jpg" },
+];
 
 const Background: React.FC = () => {
   const containerRef = useRef<HTMLDivElement>(null);
   const appRef = useRef<PIXI.Application | null>(null);
+  const backgroundRef = useRef<PIXI.Sprite | null>(null);
+  const displacementFilterRef = useRef<DisplacementFilter | null>(null);
+  const [currentWallpaper, setCurrentWallpaper] = useState(
+    () => WALLPAPERS[Math.floor(Math.random() * WALLPAPERS.length)]
+  );
+
+  const changeWallpaper = async (app: PIXI.Application) => {
+    if (!backgroundRef.current) return;
+
+    // Fade out
+    const fadeOutTween = { alpha: 1 };
+    const fadeOutDuration = 300; // 0.3 seconds
+    const startTime = Date.now();
+
+    const fadeOut = () => {
+      const elapsed = Date.now() - startTime;
+      const progress = Math.min(elapsed / fadeOutDuration, 1);
+      fadeOutTween.alpha = 1 - progress;
+
+      if (backgroundRef.current) {
+        backgroundRef.current.alpha = fadeOutTween.alpha;
+      }
+
+      if (progress < 1) {
+        requestAnimationFrame(fadeOut);
+      } else {
+        // After fade out, load new wallpaper
+        loadNewWallpaper();
+      }
+    };
+
+    fadeOut();
+
+    const loadNewWallpaper = async () => {
+      // Choose new random wallpaper (different from current)
+      let newWallpaper;
+      do {
+        newWallpaper =
+          WALLPAPERS[Math.floor(Math.random() * WALLPAPERS.length)];
+      } while (newWallpaper.image === currentWallpaper.image);
+
+      try {
+        const [mainTexture, depthTexture] = await Promise.all([
+          PIXI.Assets.load(
+            `/background/image/${newWallpaper.image}.${newWallpaper.ext}`
+          ),
+          PIXI.Assets.load(`/background/depthmap/${newWallpaper.image}.png`),
+        ]);
+
+        if (backgroundRef.current) {
+          backgroundRef.current.texture = mainTexture;
+          // Apply dark tint to new background
+          backgroundRef.current.tint = 0xcccccc;
+          backgroundRef.current.alpha = 0.8;
+          // Create a new displacement filter with the new depth map
+          const newDisplacementFilter = new DisplacementFilter(
+            new PIXI.Sprite(depthTexture)
+          );
+          newDisplacementFilter.scale.x = 10;
+          newDisplacementFilter.scale.y = 10;
+          backgroundRef.current.filters = [newDisplacementFilter];
+          displacementFilterRef.current = newDisplacementFilter;
+        }
+
+        setCurrentWallpaper(newWallpaper);
+
+        // Fade in
+        const fadeInTween = { alpha: 0 };
+        const fadeInDuration = 300; // 0.3 seconds
+        const fadeInStart = Date.now();
+
+        const fadeIn = () => {
+          const elapsed = Date.now() - fadeInStart;
+          const progress = Math.min(elapsed / fadeInDuration, 1);
+          fadeInTween.alpha = progress;
+
+          if (backgroundRef.current) {
+            backgroundRef.current.alpha = fadeInTween.alpha;
+          }
+
+          if (progress < 1) {
+            requestAnimationFrame(fadeIn);
+          }
+        };
+
+        fadeIn();
+      } catch (error) {
+        console.error("Error loading new wallpaper:", error);
+      }
+    };
+  };
 
   useEffect(() => {
     if (!containerRef.current) return;
 
     console.log("Initializing Background component");
 
-    // Create canvas element first
     const canvas = document.createElement("canvas");
     canvas.style.width = "100%";
     canvas.style.height = "100%";
     containerRef.current.appendChild(canvas);
 
-    // Initialize PIXI application
     const app = new PIXI.Application();
     app.init({
       width: window.innerWidth,
@@ -34,26 +139,31 @@ const Background: React.FC = () => {
     const setup = async () => {
       try {
         console.log("Loading textures...");
-        // Load textures
         const [mainTexture, depthTexture] = await Promise.all([
-          PIXI.Assets.load("/background/image/cyber1.png"),
-          PIXI.Assets.load("/background/depthmap/cyber-depthmap.png"),
+          PIXI.Assets.load(
+            `/background/image/${currentWallpaper.image}.${currentWallpaper.ext}`
+          ),
+          PIXI.Assets.load(
+            `/background/depthmap/${currentWallpaper.image}.png`
+          ),
         ]);
 
         console.log("Textures loaded successfully");
 
-        // Create sprites using the loaded textures
         const background = new PIXI.Sprite(mainTexture);
         const depthMap = new PIXI.Sprite(depthTexture);
+        backgroundRef.current = background;
 
         console.log("Sprites created");
 
-        // Set up background
+        // Apply dark tint to background
+        background.tint = 0xcccccc; // Lighter gray tint (80% of white)
+        background.alpha = 0.8; // 80% opacity
+
         background.width = window.innerWidth;
         background.height = window.innerHeight;
         app.stage.addChild(background);
 
-        // Set up depth map
         depthMap.width = window.innerWidth;
         depthMap.height = window.innerHeight;
         depthMap.visible = false;
@@ -61,28 +171,32 @@ const Background: React.FC = () => {
 
         console.log("Sprites added to stage");
 
-        // Set up displacement filter
         const displacementFilter = new DisplacementFilter(depthMap);
-        displacementFilter.scale.x = 20;
-        displacementFilter.scale.y = 20;
+        displacementFilter.scale.x = 7.5;
+        displacementFilter.scale.y = 7.5;
         background.filters = [displacementFilter];
+        displacementFilterRef.current = displacementFilter;
 
         console.log("Displacement filter set up");
 
-        // Mouse move handler for parallax effect
+        // Set up wallpaper rotation interval
+        const wallpaperInterval = setInterval(() => {
+          changeWallpaper(app);
+        }, 10000);
+
         const onMouseMove = (e: MouseEvent) => {
+          if (!displacementFilterRef.current) return;
+
           const { clientX, clientY } = e;
           const centerX = window.innerWidth / 2;
           const centerY = window.innerHeight / 2;
 
-          // Calculate displacement based on mouse position
-          displacementFilter.scale.x = (clientX - centerX) * 0.05;
-          displacementFilter.scale.y = (clientY - centerY) * 0.05;
+          displacementFilterRef.current.scale.x = (clientX - centerX) * 0.0175;
+          displacementFilterRef.current.scale.y = (clientY - centerY) * 0.0175;
         };
 
         window.addEventListener("mousemove", onMouseMove);
 
-        // Handle window resize
         const onResize = () => {
           if (!appRef.current) return;
           background.width = window.innerWidth;
@@ -96,6 +210,7 @@ const Background: React.FC = () => {
         return () => {
           window.removeEventListener("mousemove", onMouseMove);
           window.removeEventListener("resize", onResize);
+          clearInterval(wallpaperInterval);
         };
       } catch (error) {
         console.error("Error in setup:", error);
@@ -107,7 +222,6 @@ const Background: React.FC = () => {
       }
     };
 
-    // Run setup
     let cleanup: (() => void) | undefined;
     setup()
       .then((cleanupFn) => {
@@ -118,7 +232,6 @@ const Background: React.FC = () => {
         console.error("Failed to complete setup:", error);
       });
 
-    // Cleanup
     return () => {
       cleanup?.();
       if (appRef.current) {

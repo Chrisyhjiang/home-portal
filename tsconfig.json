@@ -1,28 +1,27 @@
 {
   "compilerOptions": {
-    "target": "ES2020",
-    "useDefineForClassFields": true,
-    "lib": ["ES2020", "DOM", "DOM.Iterable"],
-    "module": "ESNext",
-    "skipLibCheck": true,
-    "moduleResolution": "bundler",
-    "allowImportingTsExtensions": true,
-    "resolveJsonModule": true,
-    "isolatedModules": true,
-    "noEmit": true,
-    "jsx": "react-jsx",
-    "strict": true,
-    "noUnusedLocals": true,
-    "noUnusedParameters": true,
-    "noFallthroughCasesInSwitch": true,
-    "baseUrl": ".",
+    "target": "ES2020", // Target modern JavaScript
+    "module": "CommonJS", // Use CommonJS for Jest compatibility
+    "moduleResolution": "node", // Use Node.js-style module resolution
+    "baseUrl": ".", // Base directory for path resolution
     "paths": {
-      "@/*": ["src/*"],
+      "@/*": ["src/*"], // Path aliases
       "@hooks/*": ["src/hooks/*"],
       "@features/*": ["src/features/*"],
       "@shared/*": ["src/shared/*"]
-    }
+    },
+    "esModuleInterop": true, // Enable ES module interop for CommonJS modules
+    "allowSyntheticDefaultImports": true, // Allow synthetic default imports
+    "jsx": "react-jsx", // Enable JSX support for React
+    "strict": true, // Enable strict type-checking
+    "noUnusedLocals": true, // Report unused locals
+    "noUnusedParameters": true, // Report unused parameters
+    "noFallthroughCasesInSwitch": true, // Report fallthrough cases in switch statements
+    "skipLibCheck": true, // Skip library checks for faster compilation
+    "resolveJsonModule": true, // Allow importing JSON files
+    "isolatedModules": true, // Ensure files can be compiled in isolation
+    "noEmit": true // Disable emitting JavaScript files (Jest handles this)
   },
-  "include": ["src"],
-  "references": [{ "path": "./tsconfig.node.json" }]
+  "include": ["src"], // Include files in the src directory
+  "exclude": ["node_modules"] // Exclude node_modules
 }

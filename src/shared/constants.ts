@@ -1,14 +1,14 @@
 export const apps = [
   { name: "Finder", icon: "/icons/finder-icon.png" },
-  { name: "Terminal", icon: "/icons/terminal.png" },
+  { name: "Terminal", icon: "/icons/terminal.svg" },
   {
     name: "Resume",
-    icon: "/icons/pdf-icon.png",
+    icon: "/icons/resume.webp",
     defaultFile: "/docs/Resume.pdf",
   },
   {
     name: "GitHub",
-    icon: "/icons/github.png",
+    icon: "/icons/github.webp",
     link: "https://github.com/Chrisyhjiang",
   },
 ];
