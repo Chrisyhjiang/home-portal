@@ -23,6 +23,9 @@ const Background: React.FC = () => {
   const appRef = useRef<PIXI.Application | null>(null);
   const backgroundRef = useRef<PIXI.Sprite | null>(null);
   const displacementFilterRef = useRef<DisplacementFilter | null>(null);
+  // Add refs for smooth movement
+  const targetValues = useRef({ x: 0, y: 0 });
+  const currentValues = useRef({ x: 0, y: 0 });
   const [currentWallpaper, setCurrentWallpaper] = useState(
     () => WALLPAPERS[Math.floor(Math.random() * WALLPAPERS.length)]
   );
@@ -79,8 +82,8 @@ const Background: React.FC = () => {
           const newDisplacementFilter = new DisplacementFilter(
             new PIXI.Sprite(depthTexture)
           );
-          newDisplacementFilter.scale.x = 10;
-          newDisplacementFilter.scale.y = 10;
+          newDisplacementFilter.scale.x = 20;
+          newDisplacementFilter.scale.y = 20;
           backgroundRef.current.filters = [newDisplacementFilter];
           displacementFilterRef.current = newDisplacementFilter;
         }
@@ -162,22 +165,47 @@ const Background: React.FC = () => {
 
         background.width = window.innerWidth;
         background.height = window.innerHeight;
+        // Set pivot point to center for rotation
+        background.anchor.set(0.5);
+        // Adjust position to compensate for centered anchor
+        background.position.set(window.innerWidth / 2, window.innerHeight / 2);
         app.stage.addChild(background);
 
         depthMap.width = window.innerWidth;
         depthMap.height = window.innerHeight;
+        // Also center the depth map
+        depthMap.anchor.set(0.5);
+        depthMap.position.set(window.innerWidth / 2, window.innerHeight / 2);
         depthMap.visible = false;
         app.stage.addChild(depthMap);
 
         console.log("Sprites added to stage");
 
         const displacementFilter = new DisplacementFilter(depthMap);
-        displacementFilter.scale.x = 7.5;
-        displacementFilter.scale.y = 7.5;
+        displacementFilter.scale.x = 20;
+        displacementFilter.scale.y = 20;
         background.filters = [displacementFilter];
         displacementFilterRef.current = displacementFilter;
 
         console.log("Displacement filter set up");
+
+        // Set up animation loop for smooth transitions
+        const animate = () => {
+          if (backgroundRef.current && displacementFilterRef.current) {
+            // Smooth displacement movement
+            currentValues.current.x +=
+              (targetValues.current.x - currentValues.current.x) * 0.1;
+            currentValues.current.y +=
+              (targetValues.current.y - currentValues.current.y) * 0.1;
+
+            // Apply values
+            displacementFilterRef.current.scale.x = currentValues.current.x;
+            displacementFilterRef.current.scale.y = currentValues.current.y;
+          }
+          requestAnimationFrame(animate);
+        };
+
+        animate();
 
         // Set up wallpaper rotation interval
         const wallpaperInterval = setInterval(() => {
@@ -191,8 +219,13 @@ const Background: React.FC = () => {
           const centerX = window.innerWidth / 2;
           const centerY = window.innerHeight / 2;
 
-          displacementFilterRef.current.scale.x = (clientX - centerX) * 0.0175;
-          displacementFilterRef.current.scale.y = (clientY - centerY) * 0.0175;
+          // Calculate normalized position (-1 to 1)
+          const normalizedX = (clientX - centerX) / (window.innerWidth / 2);
+          const normalizedY = (clientY - centerY) / (window.innerHeight / 2);
+
+          // Update target values with displacement only
+          targetValues.current.x = normalizedX * 20;
+          targetValues.current.y = normalizedY * 20;
         };
 
         window.addEventListener("mousemove", onMouseMove);
@@ -201,8 +234,15 @@ const Background: React.FC = () => {
           if (!appRef.current) return;
           background.width = window.innerWidth;
           background.height = window.innerHeight;
+          // Update position on resize
+          background.position.set(
+            window.innerWidth / 2,
+            window.innerHeight / 2
+          );
+
           depthMap.width = window.innerWidth;
           depthMap.height = window.innerHeight;
+          depthMap.position.set(window.innerWidth / 2, window.innerHeight / 2);
         };
 
         window.addEventListener("resize", onResize);

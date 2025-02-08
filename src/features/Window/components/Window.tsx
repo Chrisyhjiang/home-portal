@@ -167,18 +167,23 @@ const Window: React.FC<WindowProps> = ({
             size={size}
             position={position}
             onDragStop={(_, d) => {
-              setPosition({ x: d.x, y: d.y });
+              // Ensure the window doesn't go above the topbar
+              const y = Math.max(5, d.y);
+              setPosition({ x: d.x, y });
             }}
+            bounds="window"
             onResizeStop={(_, __, ref, ___, position) => {
               setSize({
                 width: ref.offsetWidth,
                 height: ref.offsetHeight,
               });
-              setPosition(position);
+              // Ensure position stays within bounds after resize
+              const y = Math.max(5, position.y);
+              setPosition({ x: position.x, y });
             }}
+            dragHandleClassName="window-top-bar"
             minWidth={300}
             minHeight={200}
-            dragHandleClassName="window-top-bar"
             disableDragging={false}
             enableResizing={true}
             className={`${windowClassName} ${windowId}`}
