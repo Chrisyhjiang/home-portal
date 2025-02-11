@@ -43,7 +43,10 @@ export const greeting = {
   logo_name: "christopher.j()",
   full_name: "Christopher Jiang",
   subTitle:
-    "Computer Science Student at the University of Waterloo. Open to collaborating on projects and internships.",
+    "A computer science student at the University of Waterloo passionate about cybersecurity, AI, and full-stack development. \
+     I worked as a software engineer at Cresta and Defang, building AI systems, automating deployments, and creating scalable \
+     apps with Python, Java, React, Go and AWS. \
+     I am open to collaborating on projects and internships. Let’s build something awesome together! 🚀",
 };
 
 export const work = [

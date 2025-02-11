@@ -17,12 +17,16 @@ const FeelingProud: React.FC<FeelingProudProps> = ({ theme }) => {
   return (
     <div className="feeling-proud-illustration">
       <img
-        src="/illustrations/feeling_proud.svg"
+        src="/illustrations/chris.png"
         alt="Developer illustration"
         style={{
-          maxWidth: "100%",
+          maxWidth: "250px",
+          width: "100%",
           height: "auto",
           filter: theme === "dark" ? "brightness(0.8)" : "none",
+          borderRadius: "50%", // Makes it circular
+          aspectRatio: "3/4", // Makes it oval (adjust ratio as needed)
+          objectFit: "cover", // Ensures the image covers the container
         }}
       />
     </div>
