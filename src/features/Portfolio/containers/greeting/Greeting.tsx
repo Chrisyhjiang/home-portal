@@ -72,47 +72,6 @@ interface GreetingProps {
   };
 }
 
-// export default function Greeting({ theme, colors }: GreetingProps) {
-//   return (
-//     <motion.div
-//       className="greet-main"
-//       id="greeting"
-//       initial={{ opacity: 0, y: 20 }}
-//       animate={{ opacity: 1, y: 0 }}
-//       transition={{ duration: 1 }}
-//     >
-//       <div className="greeting-main">
-//         <div className="greeting-text-div">
-//           <div>
-//             <motion.p
-//               className="greeting-text-p subTitle"
-//               style={{ color: colors.secondary }}
-//               initial={{ opacity: 0, y: 20 }}
-//               animate={{ opacity: 1, y: 0 }}
-//               transition={{ delay: 0.4, duration: 0.8 }}
-//             >
-//               <span>I'm </span>
-//               <span style={{ color: colors.accent }}>
-//                 {greeting.full_name}.{" "}
-//               </span>
-//               <TypeAnimation
-//                 sequence={[
-//                   greeting.subTitle,
-//                   1000, // Waits 1s before starting
-//                 ]}
-//                 wrapper="span"
-//                 speed={50} // Typing speed in milliseconds
-//                 style={{ color: colors.secondary }}
-//                 repeat={1}
-//               />
-//             </motion.p>
-//           </div>
-//         </div>
-//       </div>
-//     </motion.div>
-//   );
-// }
-
 export default function Greeting({ theme, colors }: GreetingProps) {
   const buttonStyle = style({
     backgroundColor: colors.accent,
